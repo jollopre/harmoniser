@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  gem:
+    build:
+      context: .
+      target: test
+    depends_on:
+      rabbitmq:
+        condition: service_started
+    volumes:
+      - ./:/opt
+    command: ["tail", "-f", "/dev/null"]
+  rabbitmq:
+    build:
+      context: .
+      dockerfile: rabbitmq.Dockerfile
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
