@@ -1,4 +1,4 @@
-.PHONY: build clean down install lint lint_fix shell test up
+.PHONY: build clean down install lint lint_fix logs shell test up
 
 build:
 	docker-compose build --no-cache
@@ -12,10 +12,12 @@ lint:
 	docker-compose exec gem standardrb
 lint_fix:
 	docker-compose exec gem standardrb --fix
+logs:
+	docker-compose logs
 shell:
 	docker-compose exec gem sh
 test:
-	docker build -t harmoniser:test .
-	docker run --rm harmoniser:test bundle exec rake
+	docker-compose build
+	docker-compose run --rm gem bundle exec rake
 up:
 	docker-compose up -d
