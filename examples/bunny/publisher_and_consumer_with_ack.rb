@@ -65,6 +65,7 @@ Publisher = Class.new do
   end
 
   def call(data)
+    pp "Next publish seq_no: #{channel.next_publish_seq_no}"
     exchange.publish(JSON.generate(data), {message_id: SecureRandom.uuid, persistent: true})
   end
 
@@ -87,7 +88,8 @@ Publisher = Class.new do
 end
 
 subscriber = Subscriber.new(session: session, queue_name: "queue")
-Publisher.new(session).call({msg: SecureRandom.random_number})
+result = Publisher.new(session).call({msg: SecureRandom.random_number})
+pp "Message published, result: #{result}"
 
 loop do
   puts "-------------------------------------"
