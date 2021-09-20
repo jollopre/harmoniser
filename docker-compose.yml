@@ -1,9 +1,9 @@
-version: "3.8"
+version: "3.7"
 services:
   gem:
     build:
-      context: .
       target: test
+      context: .
     depends_on:
       rabbitmq:
         condition: service_started
@@ -19,4 +19,3 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
-      start_period: 10s
