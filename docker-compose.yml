@@ -4,18 +4,13 @@ services:
     build:
       target: test
       context: .
-    depends_on:
-      rabbitmq:
-        condition: service_started
     volumes:
       - ./:/opt
     command: ["tail", "-f", "/dev/null"]
   rabbitmq:
-    build:
-      context: .
-      dockerfile: rabbitmq.Dockerfile
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 1s
-      timeout: 3s
-      retries: 30
+    image: rabbitmq:3.8.19-alpine
+  start_dependencies:
+    image: dadarek/wait-for-dependencies
+    depends_on:
+      - rabbitmq
+    command: rabbitmq:5672
