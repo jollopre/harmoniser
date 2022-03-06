@@ -9,16 +9,16 @@ down:
 install:
 	docker compose exec gem bundle install
 lint:
-	docker compose exec gem standardrb
+	docker-compose run --rm gem standardrb
 lint_fix:
-	docker compose exec gem standardrb --fix
+	docker compose run --rm gem standardrb --fix
 logs:
 	docker compose logs
 shell: start_dependencies
 	docker compose run --rm gem sh
 start_dependencies:
-	docker compose run --rm start_dependencies
+	docker-compose run --rm start_dependencies
 test: start_dependencies
-	docker compose run --rm gem bundle exec rake
+	docker-compose run --rm gem bundle exec rspec
 up: start_dependencies
 	docker compose up -d

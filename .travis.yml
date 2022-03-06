@@ -6,6 +6,5 @@ before_install:
   - sudo chmod +x /usr/local/bin/docker-compose
 install: skip
 script:
-  - make up
   - make lint
   - make test
