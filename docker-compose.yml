@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  gem:
+    build:
+      target: test
+      context: .
+    volumes:
+      - ./:/opt
+    command: ["tail", "-f", "/dev/null"]
+  rabbitmq:
+    image: rabbitmq:3.8.19-alpine
+  start_dependencies:
+    image: dadarek/wait-for-dependencies
+    depends_on:
+      - rabbitmq
+    command: rabbitmq:5672

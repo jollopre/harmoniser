@@ -3,15 +3,15 @@
 require_relative "lib/harmoniser/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "harmoniser"
-  spec.version       = Harmoniser::VERSION
-  spec.authors       = ["Jose Lloret"]
-  spec.email         = ["jollopre@gmail.com"]
+  spec.name = "harmoniser"
+  spec.version = Harmoniser::VERSION
+  spec.authors = ["Jose Lloret"]
+  spec.email = ["jollopre@gmail.com"]
 
-  spec.summary       = "A data sync library for independent services"
-  spec.description   = "Harmoniser makes it easy to synchronise data across services"
-  spec.homepage      = "https://github.com/jollopre/harmoniser"
-  spec.license       = "MIT"
+  spec.summary = "A data sync library for independent services"
+  spec.description = "Harmoniser makes it easy to synchronise data across services"
+  spec.homepage = "https://github.com/jollopre/harmoniser"
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 2.4.0"
 
   spec.metadata["allowed_push_host"] = ""
@@ -25,13 +25,12 @@ Gem::Specification.new do |spec|
   # spec.files = Dir.chdir(File.expand_path(__dir__)) do
   #   `git ls-files -z`.split("\x0").reject { |f| f.match(%r{\A(?:test|spec|features)/}) }
   # end
-  spec.bindir        = "exe"
-  spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
+  spec.bindir = "exe"
+  spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_runtime_dependency "bunny", "~> 2.19"
   spec.add_development_dependency "rake", "~> 13.0"
-
-  # For more information and examples about making a new gem, checkout our
-  # guide at: https://bundler.io/guides/creating_gem.html
+  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "standardrb", "~> 1.0"
 end

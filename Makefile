@@ -1,7 +1,24 @@
+.PHONY: build clean down install lint lint_fix logs shell start_dependencies test up
+
 build:
-	docker build -t harmoniser .
-shell:
-	docker run -it -v ${PWD}:/opt --rm harmoniser:test sh
-test:
-	docker build -t harmoniser:test .
-	docker run --rm harmoniser:test bundle exec rake
+	docker compose build --no-cache
+clean:
+	docker compose down --rmi all --volumes
+down:
+	docker compose down --remove-orphans
+install:
+	docker compose exec gem bundle install
+lint:
+	docker-compose run --rm gem standardrb
+lint_fix:
+	docker compose run --rm gem standardrb --fix
+logs:
+	docker compose logs
+shell: start_dependencies
+	docker compose run --rm gem sh
+start_dependencies:
+	docker-compose run --rm start_dependencies
+test: start_dependencies
+	docker-compose run --rm gem bundle exec rspec
+up: start_dependencies
+	docker compose up -d
