@@ -7,7 +7,7 @@ module Harmoniser
     private_constant :MUTEX
 
     module ClassMethods
-      def harmoniser_publisher(name:, channel: nil, type: :fanout, opts: {})
+      def harmoniser_publisher(name:, type:, channel: nil, opts: {})
         a_channel = channel || Publisher.harmoniser_channel
         MUTEX.synchronize do
           @harmoniser_exchange ||= Bunny::Exchange.new(
