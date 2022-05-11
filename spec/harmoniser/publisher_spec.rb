@@ -18,7 +18,7 @@ RSpec.describe Harmoniser::Publisher do
 
   describe ".harmoniser_publisher" do
     it "return a Bunny::Exchange" do
-      result = klass.harmoniser_publisher(name: "an_exchange_name")
+      result = klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout)
 
       expect(result).to be_an_instance_of(Bunny::Exchange)
     end
@@ -26,13 +26,13 @@ RSpec.describe Harmoniser::Publisher do
     context "when block is given" do
       it "yield a Bunny::Exchange for setting advance configuration" do
         expect do |b|
-          klass.harmoniser_publisher(name: "an_exchange_name", &b)
+          klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout, &b)
         end.to yield_with_args(be_an_instance_of(Bunny::Exchange))
       end
     end
 
     it "exchange declaration is thread-safe" do
-      exchange_declaration = lambda { klass.harmoniser_publisher(name: "an_exchange_name") }
+      exchange_declaration = lambda { klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout) }
 
       result1 = Thread.new(&exchange_declaration)
       result2 = Thread.new(&exchange_declaration)
@@ -42,8 +42,8 @@ RSpec.describe Harmoniser::Publisher do
 
     context "when two different name are declared for the same publisher" do
       it "first declaration is chosen" do
-        result1 = klass.harmoniser_publisher(name: "an_exchange_name")
-        result2 = klass.harmoniser_publisher(name: "another_exchange_name")
+        result1 = klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout)
+        result2 = klass.harmoniser_publisher(name: "another_exchange_name", type: :fanout)
 
         expect(result1.name).to eq("an_exchange_name")
         expect(result2.name).to eq("an_exchange_name")
@@ -53,7 +53,7 @@ RSpec.describe Harmoniser::Publisher do
 
   describe ".publish" do
     let!(:exchange) do
-      klass.harmoniser_publisher(name: "exchange") do |exchange|
+      klass.harmoniser_publisher(name: "exchange", type: :fanout) do |exchange|
         queue = exchange.channel.queue("", auto_delete: true).bind(exchange)
         @consumed = false
         queue.subscribe do |delivery_info, properties, payload|

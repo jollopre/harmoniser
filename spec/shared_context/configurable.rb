@@ -4,4 +4,5 @@ RSpec.shared_context "configurable" do
       config.bunny = {host: "rabbitmq"}
     end
   end
+  let(:bunny) { Harmoniser.bunny }
 end
