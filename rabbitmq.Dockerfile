@@ -1,1 +1,1 @@
-FROM rabbitmq:3.8.19-alpine
+FROM rabbitmq:3.12.6-alpine
