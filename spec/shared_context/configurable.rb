@@ -1,8 +1,10 @@
 RSpec.shared_context "configurable" do
   before(:each) do
     Harmoniser.configure do |config|
-      config.bunny = {host: "rabbitmq"}
+      config.connection_opts = {
+        host: "rabbitmq"
+      }
     end
   end
-  let(:bunny) { Harmoniser.bunny }
+  let(:bunny) { Bunny.new(host: "rabbitmq").start }
 end

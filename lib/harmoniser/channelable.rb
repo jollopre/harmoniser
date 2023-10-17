@@ -11,9 +11,8 @@ module Harmoniser
       end
 
       def create_channel
-        session = Harmoniser.bunny
-        session.start
-        session.create_channel
+        connection = Harmoniser.connection
+        connection.create_channel
       end
     end
 

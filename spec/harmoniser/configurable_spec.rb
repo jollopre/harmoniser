@@ -49,17 +49,17 @@ RSpec.describe Harmoniser::Configurable do
     end
   end
 
-  describe ".bunny" do
+  describe ".connection" do
     it "forward to configuration object" do
-      subject.configure { |config| config.bunny = {} }
+      subject.configure { |config| config.connection_opts = { host: "rabbitmq" } }
 
-      expect(subject.bunny).to be_an_instance_of(Bunny::Session)
+      expect(subject.connection).to be_an_instance_of(Harmoniser::Connection)
     end
 
     context "when configuration object is not set" do
       it "raise NoMethodError" do
         expect do
-          subject.bunny
+          subject.connection
         end.to raise_error(NoMethodError, /Please, configure first/)
       end
     end

@@ -1,52 +1,80 @@
 require "harmoniser/configuration"
 
 RSpec.describe Harmoniser::Configuration do
-  describe "#bunny=" do
+  describe "#connection" do
+    subject { described_class.new }
+    before do
+      subject.connection_opts = { host: "rabbitmq" }
+    end
+
+    it "creates a connection to RabbitMQ using Bunny underneath" do
+      expect_any_instance_of(Bunny::Session).to receive(:start)
+
+      subject.connection
+    end
+
+    it "connection creation is thread-safe" do
+      connection_creation = lambda { subject.connection }
+
+      result1 = Thread.new(&connection_creation)
+      result2 = Thread.new(&connection_creation)
+
+      expect(result1.value.object_id).to eq(result2.value.object_id)
+    end
+
+    it "each instance has its own connection" do
+      configuration1 = described_class.new
+      configuration1.connection_opts = { host: "rabbitmq" }
+      configuration2 = described_class.new
+      configuration2.connection_opts = { host: "rabbitmq" }
+
+      expect(configuration1.connection.object_id).not_to eq(configuration2.connection.object_id)
+    end
+  end
+
+  describe "#connection_opts=" do
     subject { described_class.new }
 
-    context "when hash of options is passed" do
-      before do
-        allow(Bunny).to receive(:new)
-      end
+    context "when called with empty opts" do
+      it "uses default connection opts defined" do
+        subject.connection_opts = {}
 
-      it "forward them to Bunny" do
-        subject.bunny = {host: "a_host", port: "a_port", user: "wadus", pass: "S3cret_password", vhost: "/"}
-
-        expect(Bunny).to have_received(:new).with(
-          host: "a_host",
-          port: "a_port",
-          user: "wadus",
-          pass: "S3cret_password",
+        expect(subject.connection_opts).to eq({
+          host: "127.0.0.1",
+          logger: subject.logger,
+          password: "guest",
+          port: 5672,
+          tls_silence_warnings: true,
+          username: "guest",
           vhost: "/",
-          logger: subject.logger
-        )
-      end
-
-      context "but includes logger" do
-        it "respect logger option passed" do
-          logger = Logger.new(IO::NULL)
-
-          subject.bunny = {host: "a_host", port: "a_port", user: "wadus", pass: "S3cret_password", vhost: "/", logger: logger}
-
-          expect(Bunny).to have_received(:new).with(
-            include(logger: logger)
-          )
-        end
+          verify_peer: false
+        })
       end
     end
 
-    context "when Bunny instance is passed" do
-      it "set bunny instance variable" do
-        subject.bunny = Bunny.new({})
+    context "when any argument matching properties of the default connection opts defined is passed" do
+      it "override the properties" do
+        subject.connection_opts = { host: "wadus", password: "secret_password" }
 
-        expect(subject.bunny).to be_an_instance_of(Bunny::Session)
+        expect(subject.connection_opts).to eq({
+          host: "wadus",
+          logger: subject.logger,
+          password: "secret_password",
+          port: 5672,
+          tls_silence_warnings: true,
+          username: "guest",
+          vhost: "/",
+          verify_peer: false
+        })
       end
     end
 
-    it "raises ArgumentError" do
-      expect do
-        subject.bunny = nil
-      end.to raise_error(ArgumentError, "Hash or Bunny argument is expected")
+    context "when called without a non Hash object" do
+      it "raises TypeError" do
+        expect do
+          subject.connection_opts = "wadus"
+        end.to raise_error(TypeError, "opts must be a Hash object")
+      end
     end
   end
 end
