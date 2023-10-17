@@ -1,22 +1,34 @@
-require "bunny"
 require "logger"
+require "harmoniser/connection"
+require "harmoniser/connection_opts"
 
 module Harmoniser
   class Configuration
-    attr_reader :bunny, :logger
+    MUTEX = Mutex.new
+    attr_reader :connection, :connection_opts, :logger
 
     def initialize
       @logger = Logger.new($stdout)
+      @connection_opts = DEFAULT_CONNECTION_OPTS
+        .to_h
+        .merge({ logger: @logger })
     end
 
-    def bunny=(value)
-      if value.is_a?(Bunny::Session)
-        @bunny = value
-      elsif value.is_a?(Hash)
-        @bunny = Bunny.new({logger: @logger}.merge(value))
-      else
-        raise ArgumentError.new("Hash or Bunny argument is expected")
+    def connection
+      MUTEX.synchronize do
+        unless @connection
+          @connection = Connection.new(connection_opts)
+          @connection.start
+        end
+
+        @connection
       end
+    end
+
+    def connection_opts=(opts)
+      raise TypeError, "opts must be a Hash object" unless opts.is_a?(Hash)
+
+      @connection_opts = connection_opts.merge(opts)
     end
   end
 end

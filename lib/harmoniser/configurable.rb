@@ -16,6 +16,6 @@ module Harmoniser
       @configuration
     end
 
-    def_delegators :configuration, :logger, :bunny
+    def_delegators :configuration, :logger, :connection
   end
 end
