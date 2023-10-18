@@ -1,6 +1,7 @@
 require "logger"
 require "harmoniser/connection"
 require "harmoniser/connection_opts"
+require "harmoniser/topology"
 
 module Harmoniser
   class Configuration
@@ -12,15 +13,19 @@ module Harmoniser
       @connection_opts = DEFAULT_CONNECTION_OPTS
         .to_h
         .merge({ logger: @logger })
+      @topology = Topology.new
+    end
+
+    def define_topology
+      raise LocalJumpError, "A block is required for this method" unless block_given?
+
+      yield(@topology)
     end
 
     def connection
       MUTEX.synchronize do
-        unless @connection
-          @connection = Connection.new(connection_opts)
-          @connection.start
-        end
-
+        @connection = Connection.new(connection_opts) unless @connection
+        @connection.start unless @connection.open?
         @connection
       end
     end

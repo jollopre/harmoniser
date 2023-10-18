@@ -31,7 +31,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 ## Roadmap
 
 - Add other properties to DEFAULT_CONNECTION_OPTS like heartbeat, connection_timeout,
-  read_timeout, write_timeout, recovery_completed, recovery_attempt_started, connection_name
+  read_timeout, write_timeout, recovery_completed, recovery_attempt_started
 - Explore if Exchange#on_return might be proxied through Harmoniser::Publisher
 - Evaluate if there is any benefit on using Channel#synchronize instead of a mutex for each publication
 - Explore if Channel#on_error or Channel#on_uncaught_exception should be proxied through Harmoniser::Publisher or Harmoniser::Subscriber
