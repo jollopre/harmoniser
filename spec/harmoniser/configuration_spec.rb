@@ -3,12 +3,13 @@ require "harmoniser/configuration"
 RSpec.describe Harmoniser::Configuration do
   describe "#connection" do
     subject { described_class.new }
+
     before do
       subject.connection_opts = { host: "rabbitmq" }
     end
 
-    it "creates a connection to RabbitMQ using Bunny underneath" do
-      expect_any_instance_of(Bunny::Session).to receive(:start)
+    it "creates a connection to RabbitMQ using Connection underneath" do
+      expect_any_instance_of(Harmoniser::Connection).to receive(:start)
 
       subject.connection
     end
@@ -30,6 +31,14 @@ RSpec.describe Harmoniser::Configuration do
 
       expect(configuration1.connection.object_id).not_to eq(configuration2.connection.object_id)
     end
+
+    it "a closed connection can be re-opened" do
+      bunny_instance = subject.connection.instance_variable_get(:@bunny)
+      subject.connection.close
+
+      expect(bunny_instance.open?).to eq(false)
+      expect(subject.connection.open?).to eq(true)
+    end
   end
 
   describe "#connection_opts=" do
@@ -39,7 +48,8 @@ RSpec.describe Harmoniser::Configuration do
       it "uses default connection opts defined" do
         subject.connection_opts = {}
 
-        expect(subject.connection_opts).to eq({
+        expect(subject.connection_opts).to include({
+          connection_name: /harmoniser@0.1.0-/,
           host: "127.0.0.1",
           logger: subject.logger,
           password: "guest",
@@ -56,7 +66,8 @@ RSpec.describe Harmoniser::Configuration do
       it "override the properties" do
         subject.connection_opts = { host: "wadus", password: "secret_password" }
 
-        expect(subject.connection_opts).to eq({
+        expect(subject.connection_opts).to include({
+          connection_name: /harmoniser@0.1.0-/,
           host: "wadus",
           logger: subject.logger,
           password: "secret_password",
@@ -74,6 +85,32 @@ RSpec.describe Harmoniser::Configuration do
         expect do
           subject.connection_opts = "wadus"
         end.to raise_error(TypeError, "opts must be a Hash object")
+      end
+    end
+  end
+
+  describe "define_topology" do
+    it "yield a topology object" do
+      expect do |b|
+        subject.define_topology(&b)
+      end.to yield_with_args(be_an_instance_of(Harmoniser::Topology))
+    end
+
+    it "topology object is memoized" do
+      topology1 = nil
+      topology2 = nil
+
+      subject.define_topology { |topology| topology1 = topology }
+      subject.define_topology { |topology| topology2 = topology }
+
+      expect(topology1.object_id).to eq(topology2.object_id)
+    end
+
+    context "when block is not received" do
+      it "raises LocalJumpError" do
+        expect do
+          subject.define_topology
+        end.to raise_error(LocalJumpError, "A block is required for this method")
       end
     end
   end

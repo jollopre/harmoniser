@@ -8,7 +8,9 @@ services:
       - ./:/opt
     command: ["tail", "-f", "/dev/null"]
   rabbitmq:
-    image: rabbitmq:3.8.19-alpine
+    image: rabbitmq:3.9.29-management
+    ports:
+      - "15672:15672"
   start_dependencies:
     image: dadarek/wait-for-dependencies
     depends_on:
