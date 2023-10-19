@@ -9,6 +9,7 @@ RSpec.describe Harmoniser::Publisher do
       include Harmoniser::Publisher
     end
   end
+  let(:exchange_name) { "harmoniser_publisher_exchange" }
 
   it "MUTEX constant is private" do
     expect do
@@ -17,49 +18,24 @@ RSpec.describe Harmoniser::Publisher do
   end
 
   describe ".harmoniser_publisher" do
-    it "return a Bunny::Exchange" do
-      result = klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout)
+    it "return a Definition::Exchange" do
+      result = klass.harmoniser_publisher(exchange_name: exchange_name)
 
-      expect(result).to be_an_instance_of(Bunny::Exchange)
-    end
-
-    context "when block is given" do
-      it "yield a Bunny::Exchange for setting advance configuration" do
-        expect do |b|
-          klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout, &b)
-        end.to yield_with_args(be_an_instance_of(Bunny::Exchange))
-      end
-    end
-
-    it "exchange declaration is thread-safe" do
-      exchange_declaration = lambda { klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout) }
-
-      result1 = Thread.new(&exchange_declaration)
-      result2 = Thread.new(&exchange_declaration)
-
-      expect(result1.value.object_id).to eq(result2.value.object_id)
-    end
-
-    context "when two different name are declared for the same publisher" do
-      it "first declaration is chosen" do
-        result1 = klass.harmoniser_publisher(name: "an_exchange_name", type: :fanout)
-        result2 = klass.harmoniser_publisher(name: "another_exchange_name", type: :fanout)
-
-        expect(result1.name).to eq("an_exchange_name")
-        expect(result2.name).to eq("an_exchange_name")
-      end
+      exchange_definition = Harmoniser::Definition::Exchange.new(name: exchange_name, type: nil, opts: { passive: true })
+      expect(result).to eq(exchange_definition)
     end
   end
 
   describe ".publish" do
-    let!(:exchange) do
-      klass.harmoniser_publisher(name: "exchange", type: :fanout) do |exchange|
-        queue = exchange.channel.queue("", auto_delete: true).bind(exchange)
-        @consumed = false
-        queue.subscribe do |delivery_info, properties, payload|
-          @consumed = true
-        end
+    before do
+      channel = bunny.create_channel
+      exchange = Bunny::Exchange.new(channel, :direct, exchange_name)
+      queue = Bunny::Queue.new(channel).bind(exchange)
+      queue.subscribe do |_,_,_|
+        @consumed = true
       end
+
+      klass.harmoniser_publisher(exchange_name: exchange_name)
     end
 
     it "publish a message" do
@@ -80,18 +56,27 @@ RSpec.describe Harmoniser::Publisher do
       expect(result1.object_id).to eq(result2.object_id)
     end
 
-    it "publication is thread-safe" do
-      exchange_publication = lambda { klass.publish("foo") }
-      result1 = Thread.new(&exchange_publication)
-      result2 = Thread.new(&exchange_publication)
+    context "when exchange does not exist" do
+      it "raises Bunny::NotFound" do
+        klass.harmoniser_publisher(exchange_name: "wtf")
 
-      expect do
-        result1.value
-        result2.value
-      end.not_to raise_error(Bunny::Exception)
+        expect do
+          klass.publish("foo")
+        end.to raise_error(Bunny::NotFound)
+      end
     end
 
-    context "declare exchange with defaults" do
+    context "when exchange definition is not provider" do
+      before { klass.instance_variable_set(:@harmoniser_exchange_definition, nil) }
+
+      it "raises MissingExchangeDefinition" do
+        expect do
+          klass.publish("foo")
+        end.to raise_error(Harmoniser::Publisher::MissingExchangeDefinition, "Please, call harmoniser_publisher class method first with the exchange_name that will be used for publications")
+      end
+    end
+
+    context "on_return" do
       # TODO
     end
 
