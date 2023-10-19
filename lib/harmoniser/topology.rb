@@ -1,38 +1,9 @@
 require "harmoniser/channelable"
+require "harmoniser/definition"
 
 module Harmoniser
   class Topology
     include Channelable
-
-    Exchange = Data.define(:name, :type, :opts) do
-      def hash
-        [self.class, name].hash
-      end
-
-      def eql?(other)
-        self.class == other.class && name == other.name
-      end
-    end
-
-    Queue = Data.define(:name, :opts) do
-      def hash
-        [self.class, name].hash
-      end
-
-      def eql?(other)
-        self.class == other.class && name == other.name
-      end
-    end
-
-    Binding = Data.define(:exchange_name, :destination_name, :destination_type, :opts) do
-      def queue?
-        [:queue, "queue"].include?(destination_type)
-      end
-
-      def exchange?
-        [:exchange, "exchange"].include?(destination_type)
-      end
-    end
 
     attr_reader :bindings, :exchanges, :queues
 
@@ -43,7 +14,7 @@ module Harmoniser
     end
 
     def add_exchange(type, name, **opts)
-      @exchanges << Exchange.new(
+      @exchanges << Definition::Exchange.new(
         type: type,
         name: name,
         opts: opts
@@ -51,14 +22,14 @@ module Harmoniser
     end
 
     def add_queue(name, **opts)
-      @queues << Queue.new(
+      @queues << Definition::Queue.new(
         name: name,
         opts: opts
       )
     end
 
     def add_binding(exchange_name, destination_name, destination_type = :queue, **opts)
-      @bindings << Binding.new(
+      @bindings << Definition::Binding.new(
         exchange_name: exchange_name,
         destination_name: destination_name,
         destination_type: destination_type,

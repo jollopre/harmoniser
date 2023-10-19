@@ -30,6 +30,8 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Roadmap
 
+- Harmoniser::Channelable memoization is problematic when channel is closed (Precondition failed
+  when checking exchange declaration, for instance)
 - Add other properties to DEFAULT_CONNECTION_OPTS like heartbeat, connection_timeout,
   read_timeout, write_timeout, recovery_completed, recovery_attempt_started
 - Explore if Exchange#on_return might be proxied through Harmoniser::Publisher

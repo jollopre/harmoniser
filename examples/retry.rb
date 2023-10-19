@@ -2,12 +2,12 @@ require "bundler/setup"
 require "harmoniser"
 
 Harmoniser.configure do |config|
-  config.bunny = {host: "rabbitmq"}
+  config.connection_opts = {host: "rabbitmq"}
 end
 
 class Publisher
   include Harmoniser::Publisher
-  harmoniser_publisher name: "", type: :direct
+  harmoniser_publisher exchange_name: ""
 end
 
 # Retry strategy using default exchange with routing key to move to the waiting queue. The messages

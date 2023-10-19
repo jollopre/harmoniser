@@ -1,31 +1,45 @@
 require "harmoniser/channelable"
+require "harmoniser/definition"
 
 module Harmoniser
   module Publisher
+    class MissingExchangeDefinition < StandardError ; end
     include Channelable
     MUTEX = Mutex.new
     private_constant :MUTEX
 
     module ClassMethods
-      def harmoniser_publisher(name:, type:, channel: nil, opts: {})
-        a_channel = channel || Publisher.harmoniser_channel
-        MUTEX.synchronize do
-          @harmoniser_exchange ||= Bunny::Exchange.new(
-            a_channel,
-            type,
-            name,
-            opts
-          )
-        end
-        yield(@harmoniser_exchange) if block_given?
-        @harmoniser_exchange
+      def harmoniser_publisher(exchange_name:)
+        @harmoniser_exchange_definition = Definition::Exchange.new(
+          name: exchange_name,
+          type: nil,
+          opts: { passive: true }
+        )
       end
 
       def publish(payload, opts = {})
+        raise raise_missing_exchange_definition unless @harmoniser_exchange_definition
+
         MUTEX.synchronize do
-          @harmoniser_exchange
-            .publish(payload, opts)
+          harmoniser_exchange.publish(payload, opts)
         end
+      end
+
+      private
+
+      def harmoniser_exchange
+        return @harmoniser_exchange if @harmoniser_exchange
+
+        @harmoniser_exchange ||= Bunny::Exchange.new(
+          Publisher.harmoniser_channel,
+          @harmoniser_exchange_definition.type,
+          @harmoniser_exchange_definition.name,
+          @harmoniser_exchange_definition.opts
+        )
+      end
+
+      def raise_missing_exchange_definition
+        raise MissingExchangeDefinition, "Please, call harmoniser_publisher class method first with the exchange_name that will be used for publications"
       end
     end
 
