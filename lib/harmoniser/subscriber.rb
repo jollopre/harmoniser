@@ -1,4 +1,5 @@
 require "harmoniser/channelable"
+require "harmoniser/definition"
 
 module Harmoniser
   module Subscriber
@@ -7,62 +8,67 @@ module Harmoniser
     private_constant :MUTEX
 
     module ClassMethods
-      attr_reader :harmoniser_consumer
-
-      def harmoniser_queue_declare(name, opts = {})
-        a_channel = Subscriber.harmoniser_channel
-        a_channel.queue_declare(name, opts)
+      def harmoniser_subscriber(queue_name:, consumer_tag: nil, no_ack: true, exclusive: false, arguments: {})
+        @harmoniser_consumer_definition = Definition::Consumer.new(
+          queue_name: queue_name,
+          consumer_tag: consumer_tag,
+          no_ack: no_ack,
+          exclusive: exclusive,
+          arguments: arguments
+        )
       end
 
-      def harmoniser_queue_bind(name, exchange, opts = {})
-        a_channel = Subscriber.harmoniser_channel
-        a_channel.queue_bind(name, exchange, opts)
-      end
-
-      def harmoniser_subscriber(queue:, channel: nil, consumer_tag: nil, no_ack: true, exclusive: false, arguments: {})
-        a_channel = channel || Subscriber.harmoniser_channel
+      def harmoniser_subscriber_start
         MUTEX.synchronize do
-          @harmoniser_consumer ||= Bunny::Consumer.new(
-            a_channel,
-            queue,
-            consumer_tag || a_channel.generate_consumer_tag,
-            no_ack,
-            exclusive,
-            arguments
-          )
-        end
-        yield(@harmoniser_consumer) if block_given?
-        @harmoniser_consumer
-      end
-
-      def singleton_method_added(id)
-        if id == :on_delivery
-          on_delivery_instrumenter
-        elsif id == :on_cancellation
-          on_cancellation_instrumenter
+          @harmoniser_consumer ||= create_consumer
         end
       end
 
-      def on_delivery_instrumenter
-        @harmoniser_consumer.on_delivery do |delivery_info, properties, payload|
-          on_delivery(delivery_info, properties, payload)
-        end
-        @harmoniser_consumer
-          .channel
-          .basic_consume_with(@harmoniser_consumer)
+      private
+
+      def create_consumer
+        consumer = Bunny::Consumer.new(
+          Subscriber.harmoniser_channel,
+          @harmoniser_consumer_definition.queue_name,
+          @harmoniser_consumer_definition.consumer_tag || Subscriber.harmoniser_channel.generate_consumer_tag,
+          @harmoniser_consumer_definition.no_ack,
+          @harmoniser_consumer_definition.exclusive,
+          @harmoniser_consumer_definition.arguments
+        )
+        handle_cancellation(consumer)
+        handle_delivery(consumer)
+        register_consumer(consumer)
+        consumer
       end
 
-      def on_cancellation_instrumenter
-        @harmoniser_consumer.on_cancellation do |basic_cancel|
-          on_cancellation(basic_cancel)
+      def handle_cancellation(consumer)
+        consumer.on_cancellation do |basic_cancel|
+          if respond_to?(:on_cancellation)
+            on_cancellation(basic_cancel)
+          else
+            Harmoniser.logger.info("default on_cancellation handler executed")
+          end
         end
+      end
+
+      def handle_delivery(consumer)
+        consumer.on_delivery do |delivery_info, properties, payload|
+          if respond_to?(:on_delivery)
+            on_delivery(delivery_info, properties, payload)
+          else
+            Harmoniser.logger.info("default on_delivery handler executed")
+          end
+        end
+      end
+
+      def register_consumer(consumer)
+        consumer.channel.basic_consume_with(consumer)
       end
     end
 
     class << self
       def included(base)
         base.extend(ClassMethods)
-        base.private_class_method :on_delivery_instrumenter, :on_cancellation_instrumenter
       end
     end
   end
