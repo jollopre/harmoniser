@@ -10,6 +10,8 @@ module Harmoniser
       end
     end
 
+    Consumer = Data.define(:queue_name, :consumer_tag, :no_ack, :exclusive, :arguments)
+
     Exchange = Data.define(:name, :type, :opts) do
       def hash
         [self.class, name].hash
