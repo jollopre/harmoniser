@@ -18,11 +18,14 @@ module Harmoniser
       end
 
       def publish(payload, opts = {})
-        raise raise_missing_exchange_definition unless @harmoniser_exchange_definition
+        raise_missing_exchange_definition unless @harmoniser_exchange_definition
 
         MUTEX.synchronize do
           harmoniser_exchange.publish(payload, opts)
         end
+        Harmoniser.logger.debug { "Message published: payload = `#{payload}`, opts = `#{opts}`" }
+
+        harmoniser_exchange
       end
 
       private

@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+require "harmoniser/cli"
+
+$stdout.sync = true
+begin
+  Harmoniser::CLI.instance.call
+rescue => e
+  warn(e.message)
+  warn(e.backtrace.join("\n"))
+  exit(1)
+end

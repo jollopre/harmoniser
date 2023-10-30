@@ -1,9 +1,12 @@
 require "harmoniser/channelable"
 require "harmoniser/definition"
+require "harmoniser/includable"
 
 module Harmoniser
   module Subscriber
+    class MissingConsumerDefinition < StandardError ; end
     include Channelable
+    include Includable
     MUTEX = Mutex.new
     private_constant :MUTEX
 
@@ -27,6 +30,8 @@ module Harmoniser
       private
 
       def create_consumer
+        raise_missing_consumer_definition unless @harmoniser_consumer_definition
+
         consumer = Bunny::Consumer.new(
           Subscriber.harmoniser_channel,
           @harmoniser_consumer_definition.queue_name,
@@ -46,7 +51,7 @@ module Harmoniser
           if respond_to?(:on_cancellation)
             on_cancellation(basic_cancel)
           else
-            Harmoniser.logger.info("default on_cancellation handler executed")
+            Harmoniser.logger.info("Default on_cancellation handler executed for consumer: consumer_tag = `#{consumer.consumer_tag}`, queue = `#{consumer.queue}`")
           end
         end
       end
@@ -56,7 +61,7 @@ module Harmoniser
           if respond_to?(:on_delivery)
             on_delivery(delivery_info, properties, payload)
           else
-            Harmoniser.logger.info("default on_delivery handler executed")
+            Harmoniser.logger.info("Default on_delivery handler executed for consumer: consumer_tag = `#{consumer.consumer_tag}`, queue = `#{consumer.queue}`")
           end
         end
       end
@@ -64,11 +69,16 @@ module Harmoniser
       def register_consumer(consumer)
         consumer.channel.basic_consume_with(consumer)
       end
+
+      def raise_missing_consumer_definition
+        raise MissingConsumerDefinition, "Please, call harmoniser_subscriber class method first with the queue_name that will be used for subscribing"
+      end
     end
 
     class << self
       def included(base)
         base.extend(ClassMethods)
+        harmoniser_register_included(base)
       end
     end
   end

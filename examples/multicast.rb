@@ -24,15 +24,11 @@ Harmoniser.configure do |config|
   end
 end
 
-class PaymentPublisher
+class PaymentPubSub
   include Harmoniser::Publisher
-
-  harmoniser_publisher exchange_name: $exchange_name
-end
-
-class PaymentSubscriber
   include Harmoniser::Subscriber
 
+  harmoniser_publisher exchange_name: $exchange_name
   harmoniser_subscriber queue_name: $queue_name
 
   class << self
@@ -44,11 +40,12 @@ class PaymentSubscriber
     end
   end
 end
+
 # start subscriber
-PaymentSubscriber.harmoniser_subscriber_start
+PaymentPubSub.harmoniser_subscriber_start
 # publish message
-PaymentPublisher.publish({ foo: "bar" }.to_json)
+PaymentPubSub.publish({ foo: "bar" }.to_json)
 # publish another message
-PaymentPublisher.publish({ foo: "bar" }.to_json, routing_key: "#{$owner}.1-0.event.payment.initiated")
+PaymentPubSub.publish({ foo: "bar" }.to_json, routing_key: "#{$owner}.1-0.event.payment.initiated")
 
 sleep(2)
