@@ -34,6 +34,18 @@ RSpec.describe Harmoniser::Subscriber do
     end
   end
 
+  describe ".harmoniser_subscriber_start" do
+    context "when Consumer definition is not provided" do
+      before { klass.instance_variable_set(:@harmoniser_consumer_definition, nil) }
+
+      it "raises MissingConsumerDefinition" do
+        expect do
+          klass.harmoniser_subscriber_start
+        end.to raise_error(Harmoniser::Subscriber::MissingConsumerDefinition, /Please, call harmoniser_subscriber class method first/)
+      end
+    end
+  end
+
   describe ".on_delivery" do
     let(:exchange_name) { "harmoniser_publisher_exchange" }
     let(:queue_name) { "queue_harmoniser_publisher_exchange" }
@@ -49,6 +61,7 @@ RSpec.describe Harmoniser::Subscriber do
         end
       end
     end
+
     before(:each) do
       channel = bunny.create_channel
       exchange = Bunny::Exchange.new(channel, :direct, exchange_name)
@@ -73,12 +86,13 @@ RSpec.describe Harmoniser::Subscriber do
       end.not_to raise_error
     end
 
-    context "when klass does not respond to on_cancellation" do
-      xit "uses default handler" do
-        allow(Harmoniser.logger).to receive(:info)
-        klass.harmoniser_subscriber_start
+    context "when klass does not respond to on_delivery" do
+      it "uses default handler which output to stdout" do
+        consumer = klass.harmoniser_subscriber_start
 
-        expect(Harmoniser.logger).to have_received(:info).with(/default on_delivery handler executed/)
+        expect do
+          consumer.call
+        end.to output(/INFO -- .*Default on_delivery handler executed for consumer: consumer_tag = `#{consumer.consumer_tag}`, queue = `#{consumer.queue}`/).to_stdout_from_any_process
       end
     end
   end
@@ -115,13 +129,12 @@ RSpec.describe Harmoniser::Subscriber do
     end
 
     context "when klass does not respond to on_cancellation" do
-      xit "uses default handler" do
-        allow(Harmoniser.logger).to receive(:info)
+      it "uses default handler which output to stdout" do
         klass.harmoniser_subscriber_start
         basic_cancel = AMQ::Protocol::Basic::Cancel.new(consumer.consumer_tag, true)
-        consumer.handle_cancellation(basic_cancel)
-
-        expect(Harmoniser.logger).to have_received(:info).with(/default on_cancellation handler executed/)
+        expect do
+          consumer.handle_cancellation(basic_cancel)
+        end.to output(/INFO -- .*Default on_cancellation handler executed for consumer: consumer_tag = `#{basic_cancel.consumer_tag}`, queue = `#{consumer.queue}`/).to_stdout_from_any_process
       end
     end
   end

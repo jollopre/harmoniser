@@ -11,6 +11,23 @@ services:
     image: rabbitmq:3.9.29-management
     ports:
       - "15672:15672"
+  payments:
+    build:
+      context: examples/payments
+    volumes:
+      - ./examples/payments:/rails
+    ports:
+      - "3000:3000"
+    environment:
+      - RAILS_ENV=development
+    command: ["./bin/rails", "s", "-b", "0.0.0.0"]
+  payments-subscriber:
+    build:
+      context: examples/payments
+    volumes:
+      - ./examples/payments:/rails
+    command: ["bundle", "exec", "harmoniser", "--verbose"]
+
   start_dependencies:
     image: dadarek/wait-for-dependencies
     depends_on:

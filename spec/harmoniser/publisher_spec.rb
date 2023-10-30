@@ -49,6 +49,12 @@ RSpec.describe Harmoniser::Publisher do
       end.not_to raise_error
     end
 
+    it "logs the message published" do
+      expect do
+        klass.publish("foo")
+      end.to output(/DEBUG -- .*Message published/).to_stdout_from_any_process
+    end
+
     it "channel is shared across publications" do
       result1 = klass.publish("foo").channel
       result2 = klass.publish("bar").channel
@@ -66,7 +72,7 @@ RSpec.describe Harmoniser::Publisher do
       end
     end
 
-    context "when exchange definition is not provider" do
+    context "when Exchange definition is not provider" do
       before { klass.instance_variable_set(:@harmoniser_exchange_definition, nil) }
 
       it "raises MissingExchangeDefinition" do
@@ -77,19 +83,20 @@ RSpec.describe Harmoniser::Publisher do
     end
 
     context "on_return" do
-      # TODO
+      # TODO handler for when a published message gets returned
     end
 
     context "serialisation" do
-      # TODO
+      # TODO decide whether or not seriliazers are introduced into this gem
     end
 
     context "handle errors" do
-      # TODO
+      # TODO handler for Channel#on_error as well as
+      # Channel#on_uncaught_exception
     end
 
     context "handle OS signals" do
-      # TODO
+      # TODO decide whether or not closing connection, channels opened by Publishers when SIGINT, SIGTERM is received
     end
   end
 end

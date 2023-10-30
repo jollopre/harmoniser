@@ -1,4 +1,4 @@
-.PHONY: build clean down install lint lint_fix logs shell start_dependencies test up
+.PHONY: build clean down install lint lint_fix logs shell shell-payments start_dependencies test up
 
 build:
 	docker compose build --no-cache
@@ -14,8 +14,10 @@ lint_fix:
 	docker compose run --rm gem standardrb --fix
 logs:
 	docker compose logs
-shell: start_dependencies
-	docker compose run --rm gem sh
+shell:
+	docker compose exec -it gem sh
+shell-payments:
+	docker compose exec -it payments bash
 start_dependencies:
 	docker-compose run --rm start_dependencies
 test: start_dependencies

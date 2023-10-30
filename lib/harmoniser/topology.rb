@@ -42,6 +42,7 @@ module Harmoniser
       declare_exchanges(channel)
       declare_queues(channel)
       declare_bindings(channel)
+      Harmoniser.connection.close
     end
 
     private

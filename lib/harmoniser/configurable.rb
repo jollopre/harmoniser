@@ -16,6 +16,10 @@ module Harmoniser
       @configuration
     end
 
+    def default_configuration
+      @configuration ||= Configuration.new
+    end
+
     def_delegators :configuration, :logger, :connection
   end
 end
