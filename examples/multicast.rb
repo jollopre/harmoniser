@@ -2,34 +2,30 @@ require "bundler/setup"
 require "json"
 require "harmoniser"
 
-$env = "production"
-$owner = "com.organisation.payments-service"
-$service_name = "callback-service"
-$exchange_name = "#{$env}/ex/#{$owner}/main"
-$queue_name = "#{$env}/qu/#{$service_name}/a_use_case/#{$owner}"
-
 Harmoniser.configure do |config|
   config.connection_opts = {
     host: "rabbitmq"
   }
   config.define_topology do |topology|
-    topology.add_exchange(:topic, $exchange_name, durable: true)
-    topology.add_queue($queue_name)
+    topology.add_exchange(:topic, "my_topic_exchange", durable: true)
+    topology.add_queue("my_queue", durable: true)
     topology.add_binding(
-      $exchange_name,
-      $queue_name,
-      routing_key: "#{$owner}.1-0.event.payment.*"
+      "my_topic_exchange",
+      "my_queue",
+      routing_key: "my_resource.foo.*"
     )
     topology.declare
   end
 end
 
-class PaymentPubSub
+class MyPublisher
   include Harmoniser::Publisher
-  include Harmoniser::Subscriber
+  harmoniser_publisher exchange_name: "my_topic_exchange"
+end
 
-  harmoniser_publisher exchange_name: $exchange_name
-  harmoniser_subscriber queue_name: $queue_name
+class MySubscriber
+  include Harmoniser::Subscriber
+  harmoniser_subscriber queue_name: "my_queue"
 
   class << self
     def on_delivery(delivery_info, properties, payload)
@@ -41,11 +37,11 @@ class PaymentPubSub
   end
 end
 
-# start subscriber
-PaymentPubSub.harmoniser_subscriber_start
-# publish message
-PaymentPubSub.publish({ foo: "bar" }.to_json)
-# publish another message
-PaymentPubSub.publish({ foo: "bar" }.to_json, routing_key: "#{$owner}.1-0.event.payment.initiated")
+# Prepare subscriber to listen to messages coming to `my_queue`
+MySubscriber.harmoniser_subscriber_start
+# Publish a message without routing key. It will not be push into `my_queue`
+MyPublisher.publish({ salute: "Dropped Hello World!" }.to_json)
+# Publish a message with routing key matching the binding defined between `my_topic_exchange` and `my_queue`. 
+MyPublisher.publish({ salute: "Hello World!" }.to_json, routing_key: "my_resource.foo.bar")
 
 sleep(2)
