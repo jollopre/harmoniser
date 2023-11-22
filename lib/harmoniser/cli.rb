@@ -11,7 +11,7 @@ module Harmoniser
       "INT" => lambda { |cli, signal| raise Interrupt },
       "TERM" => lambda { |cli, signal| raise Interrupt }
     }
-    SIGNAL_HANDLERS.default = lambda { |cli, signal| cli.logger.info("Default signal handler executed since there is no handler for signal `#{signal}` received") }
+    SIGNAL_HANDLERS.default = lambda { |cli, signal| cli.logger.info("Default signal handler executed since there is no handler defined: signal = `#{signal}`") }
 
     attr_reader :logger
 
@@ -63,7 +63,7 @@ module Harmoniser
     end
 
     def handle_signal(signal)
-      logger.info("Start handle_signal with signal `#{signal}`")
+      logger.info("Signal received: signal = `#{signal}`")
       SIGNAL_HANDLERS[signal].call(self, signal)
     end
   end
