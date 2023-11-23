@@ -37,11 +37,7 @@ class MySubscriber
   end
 end
 
-# Prepare subscriber to listen to messages coming to `my_queue`
-MySubscriber.harmoniser_subscriber_start
 # Publish a message without routing key. It will not be push into `my_queue`
 MyPublisher.publish({ salute: "Dropped Hello World!" }.to_json)
 # Publish a message with routing key matching the binding defined between `my_topic_exchange` and `my_queue`. 
 MyPublisher.publish({ salute: "Hello World!" }.to_json, routing_key: "my_resource.foo.bar")
-
-sleep(2)

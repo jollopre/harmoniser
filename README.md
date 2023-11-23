@@ -4,6 +4,30 @@ A minimalistic approach to communicate with RabbitMQ.
 
 Harmoniser uses [Bunny](https://github.com/ruby-amqp/bunny) as a low level library to communicate with RabbitMQ in order to integrate publishing and messages consuming.
 
+## Getting Started
+
+1. Add this line to your application's Gemfile:
+
+```ruby
+gem "harmoniser"
+```
+
+2. Install the gem:
+
+```ruby
+  $ bundle install
+```
+
+3. Include `Harmoniser::Publisher` and/or `Harmoniser::Subscriber` in your classes. For instance, [this scenario](examples/multicast.rb) assumes that you'd like to run publishers and subscriber under the same process.
+
+4. (Optional) Run the dedicated process for Harmoniser in order to process messages from your subscribers:
+
+```sh
+  $ bundle exec harmoniser --require ./examples/multicast.rb
+```
+
+5. Inspect the logs to see if everything worked as expected. Look for logs including `harmoniser@`.
+
 ## Concepts
 
 Harmoniser is a library for publishing/consuming messages through RabbitMQ. It allows to not only connect applications but also to scale an application by performing work in the background. This gem is comprised of three parts:
@@ -11,7 +35,7 @@ Harmoniser is a library for publishing/consuming messages through RabbitMQ. It a
 ### Publisher
 
 The Publisher runs in any Ruby process (puma, unicorn, passenger, sidekiq, etc) and allows you to
-push messages through a [RabbitMQ Exchange](https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges). Creating a publisher is as simply as following:
+push messages through a [RabbitMQ Exchange](https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges). Creating a publisher is as simple as:
 
 ```ruby
 require "harmoniser"
@@ -40,12 +64,12 @@ Harmoniser.configure do |config|
 end
 ```
 
-The options permitted for `connection_opts` as those accepted by
+The options permitted for `connection_opts` are those accepted by
 [Bunny](https://github.com/ruby-amqp/bunny/blob/80a8fc7aa0cd73f8778df87ae05f28c443d10c0d/lib/bunny/session.rb#L142) since at the end this library is built on top of the most widely used Ruby client for RabbitMQ.
 
-### Server
+### Subscriber Server
 
-Harmoniser server is a process specifically dedicated to run Subscribers that are listening into [Rabbit Queues](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queues). This process like any other Ruby process (puma, unicorn, passenger, sidekiq, etc) is up and running unless OS Signals like (SIGINT, SIGTERM) are sent to it. The server during boot time is able to register each class from your code that includes `Harmoniser::Subscriber` module. Creating a subscriber is as simply as following:
+Harmoniser server is a process specifically dedicated to run Subscribers that are listening into [Rabbit Queues](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queues). This process like any other Ruby process (puma, unicorn, passenger, sidekiq, etc) is up and running unless OS Signals like (SIGINT, SIGTERM) are sent to it. The server during boot time is able to register each class from your code that includes `Harmoniser::Subscriber` module. Creating a subscriber is as simple as:
 
 ```ruby
 class MySubscriber
@@ -68,34 +92,29 @@ The code above assumes that the queue and its binding to an exchange are already
 In order for the subscribers to receive messages from a queue, you should spin up a dedicated Ruby process like following:
 
 ```sh
-  bundle exec harmoniser --require ./a_path_to_your_ruby_file.rb
+  $ bundle exec harmoniser --require ./a_path_to_your_ruby_file.rb
 ```
 
-More info about the different options accepted by harmoniser process in [Harmoniser CLI](#).
-
-## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'harmoniser'
-```
-
-And then execute:
-
-    $ bundle install
-
-Or install it yourself as:
-
-    $ gem install harmoniser
-
-## Getting Started
-
-TODO
+More info about the different options accepted by harmoniser process in [Harmoniser CLI](docs/cli.md).
 
 ## Contributing
 
-TODO
+If you are facing issues and you suspect are related to Harmoniser, please consider opening an issue [here](https://github.com/jollopre/harmoniser/issues). Remember to include as much information as possible such as version of Ruby, Rails, Harmoniser, OS, etc.
+
+If you consider you have encountered a potential bug, detailed information about how to reproduce it might help to speed up its fix.
+
+### Code
+
+In order to contribute to this codebase, you will need to setup your local development using the following steps:
+
+```sh
+# Prepare the environment for working locally.
+  $ make build
+# Perform the desired changes into your local copy
+  $ make test
+```
+
+You can also shell into the running container by executing `$ make shell` and from within execute anything related to Harmoniser on its isolated environment.
 
 ## Future Improvements
 
