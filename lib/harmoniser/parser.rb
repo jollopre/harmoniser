@@ -11,7 +11,7 @@ module Harmoniser
         opts.on "-e", "--environment ENV", "Application environment" do |arg|
           @options[:environment] = arg
         end
-        opts.on "-r", "--require [PATH|DIR]", "Location of Rails application or file to require" do |arg|
+        opts.on "-r", "--require [PATH|DIR]", "File to require or location of Rails application" do |arg|
           @options[:require] = arg
         end
         opts.on("-v", "--[no-]verbose", "Run verbosely") do |arg|
