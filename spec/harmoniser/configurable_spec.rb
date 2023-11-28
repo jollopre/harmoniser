@@ -33,11 +33,11 @@ RSpec.describe Harmoniser::Configurable do
     end
   end
 
-  
-
   describe ".connection" do
+    let(:host) { ENV.fetch("RABBITMQ_HOST") }
+
     it "forward to configuration object" do
-      subject.configure { |config| config.connection_opts = { host: "rabbitmq" } }
+      subject.configure { |config| config.connection_opts = {host: host} }
 
       expect(subject.connection).to be_an_instance_of(Harmoniser::Connection)
     end

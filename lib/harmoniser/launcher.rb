@@ -34,7 +34,7 @@ module Harmoniser
     end
 
     def stop_subscribers
-      @logger.info("Connection will be closed: connection = `#{@configuration.connection.to_s}`")
+      @logger.info("Connection will be closed: connection = `#{@configuration.connection}`")
       @configuration.connection.close
     end
 

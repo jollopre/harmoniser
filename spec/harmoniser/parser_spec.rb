@@ -2,7 +2,7 @@ require "harmoniser/parser"
 
 RSpec.describe Harmoniser::Parser do
   describe "#call" do
-    let(:logger) { Logger.new(STDOUT) }
+    let(:logger) { Logger.new($stdout) }
     subject { described_class.new(logger: logger) }
 
     context "when -e is received" do
@@ -40,16 +40,20 @@ RSpec.describe Harmoniser::Parser do
     end
 
     context "when `-V` is received" do
+      before { allow(subject).to receive(:exit) }
+
       it "outputs the version" do
         allow($stdout).to receive(:puts)
 
         expect do
           subject.call(["-V"])
-        end.to output(/Harmoniser #{Harmoniser::VERSION}/).to_stdout
+        end.to output(/Harmoniser #{Harmoniser::VERSION}/o).to_stdout
       end
     end
 
     context "when `-h` is received" do
+      before { allow(subject).to receive(:exit) }
+
       it "outputs the different options accepted for parsing" do
         allow($stdout).to receive(:puts)
 

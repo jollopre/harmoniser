@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+ENV["RABBITMQ_HOST"] ||= "127.0.0.1"
+
 require "harmoniser"
 
 RSpec.configure do |config|

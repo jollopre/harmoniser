@@ -21,7 +21,7 @@ RSpec.describe Harmoniser::Publisher do
     it "return a Definition::Exchange" do
       result = klass.harmoniser_publisher(exchange_name: exchange_name)
 
-      exchange_definition = Harmoniser::Definition::Exchange.new(name: exchange_name, type: nil, opts: { passive: true })
+      exchange_definition = Harmoniser::Definition::Exchange.new(name: exchange_name, type: nil, opts: {passive: true})
       expect(result).to eq(exchange_definition)
     end
   end
@@ -31,7 +31,7 @@ RSpec.describe Harmoniser::Publisher do
       channel = bunny.create_channel
       exchange = Bunny::Exchange.new(channel, :direct, exchange_name)
       queue = Bunny::Queue.new(channel).bind(exchange)
-      queue.subscribe do |_,_,_|
+      queue.subscribe do |_, _, _|
         @consumed = true
       end
 

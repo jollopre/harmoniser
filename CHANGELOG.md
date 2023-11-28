@@ -14,3 +14,9 @@
 ### Added
 
 - Introduce github action for releasing the gem once is merged into master
+
+## [0.3.0] - 2023-11-29
+
+### Added
+
+- Introduce github action for building, linting and running specs anytime a pull request is opened or push to master happens

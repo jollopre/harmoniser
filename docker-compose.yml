@@ -6,6 +6,8 @@ services:
       context: .
     volumes:
       - ./:/opt
+    environment:
+      - RABBITMQ_HOST=rabbitmq
     command: ["tail", "-f", "/dev/null"]
   rabbitmq:
     image: rabbitmq:3.9.29-management
