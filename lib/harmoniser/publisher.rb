@@ -3,7 +3,7 @@ require "harmoniser/definition"
 
 module Harmoniser
   module Publisher
-    class MissingExchangeDefinition < StandardError ; end
+    class MissingExchangeDefinition < StandardError; end
     include Channelable
     MUTEX = Mutex.new
     private_constant :MUTEX
@@ -13,7 +13,7 @@ module Harmoniser
         @harmoniser_exchange_definition = Definition::Exchange.new(
           name: exchange_name,
           type: nil,
-          opts: { passive: true }
+          opts: {passive: true}
         )
       end
 

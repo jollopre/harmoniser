@@ -4,7 +4,7 @@ require "harmoniser/includable"
 
 module Harmoniser
   module Subscriber
-    class MissingConsumerDefinition < StandardError ; end
+    class MissingConsumerDefinition < StandardError; end
     include Channelable
     include Includable
     MUTEX = Mutex.new

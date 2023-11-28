@@ -8,11 +8,11 @@ Gem::Specification.new do |spec|
   spec.authors = ["Jose Lloret"]
   spec.email = ["jollopre@gmail.com"]
 
-  spec.summary = "A minimalistic approach to communicate with RabbitMQ"
-  spec.description = "A declarative approach to communicate with RabbitMQ, that uses the reference low level library, to integrate publishing and consuming of messages"
+  spec.summary = "A minimalistic approach to communicating with RabbitMQ"
+  spec.description = "A declarative approach to communicating with RabbitMQ that makes it easy to integrate publishing and consuming messages"
   spec.homepage = "https://github.com/jollopre/harmoniser"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 2.7.0"
+  spec.required_ruby_version = ">= 3.2"
 
   spec.metadata = {
     "homepage_uri" => spec.homepage,
@@ -26,6 +26,6 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "bunny", "~> 2.22"
   spec.add_development_dependency "rake", "~> 13.0"
-  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "rspec", "~> 3"
   spec.add_development_dependency "standardrb", "~> 1.0"
 end

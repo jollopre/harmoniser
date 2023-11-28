@@ -13,7 +13,7 @@ RSpec.describe Harmoniser::Topology do
         Harmoniser::Definition::Exchange.new(
           name: "an_exchange",
           type: :fanout,
-          opts: { durable: false, arguments: {} }
+          opts: {durable: false, arguments: {}}
         )
       )
     end
@@ -48,7 +48,7 @@ RSpec.describe Harmoniser::Topology do
       end
     end
   end
-  
+
   describe "#add_queue" do
     it "adds queue to the topology" do
       subject.add_queue("a_queue", durable: false, type: "classic")
@@ -56,7 +56,7 @@ RSpec.describe Harmoniser::Topology do
       expect(subject.queues).to include(
         Harmoniser::Definition::Queue.new(
           name: "a_queue",
-          opts: { durable: false, type: "classic" }
+          opts: {durable: false, type: "classic"}
         )
       )
     end
@@ -99,7 +99,7 @@ RSpec.describe Harmoniser::Topology do
           exchange_name: "a_exchange",
           destination_name: "a_queue",
           destination_type: :queue,
-          opts: { routing_key: "wadus" }
+          opts: {routing_key: "wadus"}
         )
       )
     end
@@ -112,7 +112,7 @@ RSpec.describe Harmoniser::Topology do
           exchange_name: "a_exchange",
           destination_name: "another_exchange",
           destination_type: :exchange,
-          opts: { routing_key: "wadus" }
+          opts: {routing_key: "wadus"}
         )
       )
     end
@@ -126,13 +126,13 @@ RSpec.describe Harmoniser::Topology do
           exchange_name: "a_exchange",
           destination_name: "a_queue",
           destination_type: :queue,
-          opts: { routing_key: "wadus" }
+          opts: {routing_key: "wadus"}
         ),
         Harmoniser::Definition::Binding.new(
           exchange_name: "a_exchange",
           destination_name: "a_queue",
           destination_type: :queue,
-          opts: { routing_key: "wadus" }
+          opts: {routing_key: "wadus"}
         )
       ]))
     end
@@ -146,7 +146,7 @@ RSpec.describe Harmoniser::Topology do
             exchange_name: "a_exchange",
             destination_name: "a_queue",
             destination_type: :queue,
-            opts: { routing_key: "wadus" }
+            opts: {routing_key: "wadus"}
           )
         )
       end
@@ -201,10 +201,11 @@ RSpec.describe Harmoniser::Topology do
       end
     end
 
-    xcontext "unicast routing" do
+    context "unicast routing" do
       subject { described_class.new }
 
       it "creates a direct exchange and a couple of queues with different routing key" do
+        skip("TODO")
         subject.add_exchange(:direct, "unicast_exchange")
         subject.add_queue("queue1_unicast_exchange")
         subject.add_queue("queue2_unicast_exchange")
@@ -215,10 +216,11 @@ RSpec.describe Harmoniser::Topology do
       end
     end
 
-    xcontext "multicast routing" do
+    context "multicast routing" do
       subject { described_class.new }
 
       it "creates a topic exchange and a couple of queues with different routing key" do
+        skip("TODO")
         subject.add_exchange(:topic, "multicast_exchange")
         subject.add_queue("queue1_multicast_exchange")
         subject.add_queue("queue2_multicast_exchange")

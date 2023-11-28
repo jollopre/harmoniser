@@ -20,14 +20,14 @@ module Harmoniser
     }
     MUTEX = Mutex.new
 
-    attr_reader :connection, :connection_opts, :logger, :options
+    attr_reader :connection_opts, :logger, :options
     def_delegators :options, :environment, :require, :verbose
 
     def initialize
       @logger = Logger.new($stdout, progname: "harmoniser@#{VERSION}")
       @options = Options.new(**default_options)
       set_logger_severity
-      @connection_opts = DEFAULT_CONNECTION_OPTS.merge({ logger: @logger })
+      @connection_opts = DEFAULT_CONNECTION_OPTS.merge({logger: @logger})
       @topology = Topology.new
     end
 
@@ -39,7 +39,7 @@ module Harmoniser
 
     def connection
       MUTEX.synchronize do
-        @connection = Connection.new(connection_opts) unless @connection
+        @connection ||= Connection.new(connection_opts)
         @connection.start unless @connection.open?
         @connection
       end
@@ -51,8 +51,8 @@ module Harmoniser
       @connection_opts = connection_opts.merge(opts)
     end
 
-    def options_with(**kwargs)
-      @options = options.with(**kwargs)
+    def options_with(**)
+      @options = options.with(**)
       set_logger_severity
     end
 
@@ -67,10 +67,10 @@ module Harmoniser
     end
 
     def set_logger_severity
-      if @options.production?
-        @logger.level = @options.verbose? ? Logger::DEBUG : Logger::INFO
+      @logger.level = if @options.production?
+        @options.verbose? ? Logger::DEBUG : Logger::INFO
       else
-        @logger.level = Logger::DEBUG
+        Logger::DEBUG
       end
     end
   end

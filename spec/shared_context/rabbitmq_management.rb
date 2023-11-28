@@ -2,8 +2,9 @@ require "net/http"
 require "json"
 
 RSpec.shared_context "rabbitMQ management" do
+  let(:host) { ENV.fetch("RABBITMQ_HOST") }
   let(:url) do
-    "http://rabbitmq:15672/api/definitions"
+    "http://#{host}:15672/api/definitions"
   end
 
   def get_definitions
@@ -13,7 +14,7 @@ RSpec.shared_context "rabbitMQ management" do
     response = Net::HTTP.start(uri.hostname, uri.port) do |http|
       http.request(request)
     end
-    
+
     return JSON.parse(response.body, symbolize_names: true) if response.code == "200"
 
     {}

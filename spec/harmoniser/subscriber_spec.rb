@@ -27,9 +27,9 @@ RSpec.describe Harmoniser::Subscriber do
     end
 
     it "returns a Definition::Consumer with values passed" do
-      result = klass.harmoniser_subscriber(queue_name: "a_queue", consumer_tag: "a_consumer_tag", no_ack: false, exclusive: true, arguments: { foo: "bar" })
+      result = klass.harmoniser_subscriber(queue_name: "a_queue", consumer_tag: "a_consumer_tag", no_ack: false, exclusive: true, arguments: {foo: "bar"})
 
-      consumer_definition = Harmoniser::Definition::Consumer.new(queue_name: "a_queue", consumer_tag: "a_consumer_tag", no_ack: false, exclusive: true, arguments: { foo: "bar" })
+      consumer_definition = Harmoniser::Definition::Consumer.new(queue_name: "a_queue", consumer_tag: "a_consumer_tag", no_ack: false, exclusive: true, arguments: {foo: "bar"})
       expect(result).to eq(consumer_definition)
     end
   end

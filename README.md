@@ -1,6 +1,9 @@
 # Harmoniser
 
-A minimalistic approach to communicate with RabbitMQ.
+[![Gem Version](https://badge.fury.io/rb/harmoniser.svg)](https://badge.fury.io/rb/harmoniser)
+![CI workflow](https://github.com/jollopre/harmoniser/actions/workflows/ci.yml/badge.svg)
+
+A minimalistic approach to communicating with RabbitMQ.
 
 Harmoniser uses [Bunny](https://github.com/ruby-amqp/bunny) as a low level library to communicate with RabbitMQ in order to integrate publishing and messages consuming.
 

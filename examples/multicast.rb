@@ -38,6 +38,6 @@ class MySubscriber
 end
 
 # Publish a message without routing key. It will not be push into `my_queue`
-MyPublisher.publish({ salute: "Dropped Hello World!" }.to_json)
-# Publish a message with routing key matching the binding defined between `my_topic_exchange` and `my_queue`. 
-MyPublisher.publish({ salute: "Hello World!" }.to_json, routing_key: "my_resource.foo.bar")
+MyPublisher.publish({salute: "Dropped Hello World!"}.to_json)
+# Publish a message with routing key matching the binding defined between `my_topic_exchange` and `my_queue`.
+MyPublisher.publish({salute: "Hello World!"}.to_json, routing_key: "my_resource.foo.bar")

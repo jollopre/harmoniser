@@ -3,9 +3,10 @@ require "harmoniser/configuration"
 RSpec.describe Harmoniser::Configuration do
   describe "#connection" do
     subject { described_class.new }
+    let(:host) { ENV.fetch("RABBITMQ_HOST") }
 
     before do
-      subject.connection_opts = { host: "rabbitmq" }
+      subject.connection_opts = {host: host}
     end
 
     it "creates a connection to RabbitMQ using Connection underneath" do
@@ -25,9 +26,9 @@ RSpec.describe Harmoniser::Configuration do
 
     it "each instance has its own connection" do
       configuration1 = described_class.new
-      configuration1.connection_opts = { host: "rabbitmq" }
+      configuration1.connection_opts = {host: host}
       configuration2 = described_class.new
-      configuration2.connection_opts = { host: "rabbitmq" }
+      configuration2.connection_opts = {host: host}
 
       expect(configuration1.connection.object_id).not_to eq(configuration2.connection.object_id)
     end
@@ -42,6 +43,7 @@ RSpec.describe Harmoniser::Configuration do
   end
 
   describe "#connection_opts=" do
+    let(:version) { Harmoniser::VERSION }
     subject { described_class.new }
 
     context "when called with empty opts" do
@@ -49,7 +51,7 @@ RSpec.describe Harmoniser::Configuration do
         subject.connection_opts = {}
 
         expect(subject.connection_opts).to include({
-          connection_name: "harmoniser@0.1.0",
+          connection_name: "harmoniser@#{version}",
           host: "127.0.0.1",
           logger: subject.logger,
           password: "guest",
@@ -64,10 +66,10 @@ RSpec.describe Harmoniser::Configuration do
 
     context "when any argument matching properties of the default connection opts defined is passed" do
       it "override the properties" do
-        subject.connection_opts = { host: "wadus", password: "secret_password" }
+        subject.connection_opts = {host: "wadus", password: "secret_password"}
 
         expect(subject.connection_opts).to include({
-          connection_name: "harmoniser@0.1.0",
+          connection_name: "harmoniser@#{version}",
           host: "wadus",
           logger: subject.logger,
           password: "secret_password",
@@ -126,8 +128,8 @@ RSpec.describe Harmoniser::Configuration do
       end
 
       context "when RAILS_ENV is set" do
-        before { ENV['RAILS_ENV'] = "development" }
-        after { ENV.delete('RAILS_ENV') }
+        before { ENV["RAILS_ENV"] = "development" }
+        after { ENV.delete("RAILS_ENV") }
 
         it "returns the environment set at RAILS_ENV" do
           result = subject.environment
@@ -137,8 +139,8 @@ RSpec.describe Harmoniser::Configuration do
       end
 
       context "when RACK_ENV is set" do
-        before { ENV['RACK_ENV'] = "test" }
-        after { ENV.delete('RACK_ENV') }
+        before { ENV["RACK_ENV"] = "test" }
+        after { ENV.delete("RACK_ENV") }
 
         it "returns the environmet set at RACK_ENV" do
           result = subject.environment
@@ -173,8 +175,8 @@ RSpec.describe Harmoniser::Configuration do
     end
 
     context "when environment is NOT production" do
-      before { ENV['RACK_ENV'] = "test" }
-      after { ENV.delete('RACK_ENV') }
+      before { ENV["RACK_ENV"] = "test" }
+      after { ENV.delete("RACK_ENV") }
 
       it "severity is DEBUG by default" do
         expect(subject.logger.debug?).to eq(true)

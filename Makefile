@@ -9,9 +9,9 @@ down:
 install:
 	docker compose exec gem bundle install
 lint:
-	docker-compose run --rm gem standardrb
+	docker-compose exec gem standardrb
 lint_fix:
-	docker compose run --rm gem standardrb --fix
+	docker compose exec gem standardrb --fix
 logs:
 	docker compose logs
 shell:

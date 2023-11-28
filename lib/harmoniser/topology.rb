@@ -64,7 +64,7 @@ module Harmoniser
         if binding.queue?
           channel.queue_bind(binding.destination_name, binding.exchange_name, binding.opts)
         elsif binding.exchange?
-          ;
+
         end
       end
     end
