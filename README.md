@@ -125,7 +125,6 @@ You can also shell into the running container by executing `$ make shell` and fr
 - [ ] Chore: Introduce simplecov gem for code coverage.
 - [ ] Feature: Add sensible defaults for Session options like heartbeat, timeout, recovery_completed or recovery_attempt_started.
 - [ ] Feature: Add default `on_return` handler as well as permitting the definition of on_return method to be called anytime a published message gets returned.
-- [ ] Feature: Add default `on_error` and `on_uncaught_exception` as well as permitting the definition of them to be called anytime an error in the channel occurs or error in the consumer handler happens.
 - [ ] Feature: Introduce capability of configuring number of threads for queue consuming at the CLI.
 
 ## License
