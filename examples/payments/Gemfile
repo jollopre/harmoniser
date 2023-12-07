@@ -46,4 +46,4 @@ group :development do
 
 end
 
-gem "harmoniser", "~> 0"
+gem "harmoniser", git: "https://github.com/jollopre/harmoniser", branch: "master"

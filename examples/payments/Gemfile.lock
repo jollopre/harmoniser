@@ -1,3 +1,11 @@
+GIT
+  remote: https://github.com/jollopre/harmoniser
+  revision: e8e81f325d14acf16c09f62f5ee901f552166cf8
+  branch: master
+  specs:
+    harmoniser (0.3.0)
+      bunny (~> 2.22)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -96,8 +104,6 @@ GEM
     erubi (1.12.0)
     globalid (1.2.1)
       activesupport (>= 6.1)
-    harmoniser (0.1.0)
-      bunny (~> 2.22)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
     io-console (0.6.0)
@@ -200,7 +206,7 @@ PLATFORMS
 DEPENDENCIES
   bootsnap
   debug
-  harmoniser (~> 0)
+  harmoniser!
   puma (>= 5.0)
   rails (~> 7.1.1)
   sqlite3 (~> 1.4)
