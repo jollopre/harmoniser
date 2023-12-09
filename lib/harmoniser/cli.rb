@@ -46,19 +46,17 @@ module Harmoniser
     end
 
     def run
-      launcher = Launcher.new
-      launcher.start
+      Launcher
+        .new(configuration: configuration, logger: logger)
+        .start
 
       while @read_io.wait_readable
         signal = @read_io.gets.strip
         handle_signal(signal)
       end
     rescue Interrupt
-      logger.info("Shutting down!")
-      launcher.stop
       @write_io.close
       @read_io.close
-      logger.info("Bye!")
       exit(0)
     end
 

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    harmoniser (0.4.0)
+    harmoniser (0.5.0)
       bunny (~> 2.22)
 
 GEM

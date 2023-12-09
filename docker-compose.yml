@@ -28,7 +28,9 @@ services:
       context: examples/payments
     volumes:
       - ./examples/payments:/rails
-    command: ["bundle", "exec", "harmoniser", "--verbose"]
+    environment:
+      - SECRET_KEY_BASE=a_secret_key_base
+    command: ["bundle", "exec", "harmoniser"]
 
   start_dependencies:
     image: dadarek/wait-for-dependencies

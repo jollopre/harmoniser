@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0] - 2023-12-20
+
+### Added
+- Setup at_exit hook to be executed when Harmoniser exits for an opened RabbitMQ connection
+- Add defaults to Bunny::Session for timeouts and recovery attempts
+- Fix boot up problems for payments application example
+- Perform refactoring of internals such as slimming down Configuration
+
 ## [0.4.0] - 2023-12-07
 
 ### Added

@@ -1,33 +1,20 @@
 require "forwardable"
-require "logger"
-require "harmoniser/connection"
+require "harmoniser/connectable"
 require "harmoniser/topology"
 require "harmoniser/options"
 
 module Harmoniser
   class Configuration
     extend Forwardable
+    include Connectable
 
-    DEFAULT_CONNECTION_OPTS = {
-      connection_name: "harmoniser@#{VERSION}",
-      host: "127.0.0.1",
-      password: "guest",
-      port: 5672,
-      tls_silence_warnings: true,
-      username: "guest",
-      verify_peer: false,
-      vhost: "/"
-    }
-    MUTEX = Mutex.new
-
-    attr_reader :connection_opts, :logger, :options
+    attr_reader :logger, :options
     def_delegators :options, :environment, :require, :verbose
 
     def initialize
-      @logger = Logger.new($stdout, progname: "harmoniser@#{VERSION}")
+      @logger = Harmoniser.logger
       @options = Options.new(**default_options)
       set_logger_severity
-      @connection_opts = DEFAULT_CONNECTION_OPTS.merge({logger: @logger})
       @topology = Topology.new
     end
 
@@ -35,20 +22,6 @@ module Harmoniser
       raise LocalJumpError, "A block is required for this method" unless block_given?
 
       yield(@topology)
-    end
-
-    def connection
-      MUTEX.synchronize do
-        @connection ||= Connection.new(connection_opts)
-        @connection.start unless @connection.open?
-        @connection
-      end
-    end
-
-    def connection_opts=(opts)
-      raise TypeError, "opts must be a Hash object" unless opts.is_a?(Hash)
-
-      @connection_opts = connection_opts.merge(opts)
     end
 
     def options_with(**)

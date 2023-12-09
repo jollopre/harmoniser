@@ -42,9 +42,4 @@ RSpec.describe Harmoniser::Launcher do
       subject.start
     end
   end
-
-  describe "#stop" do
-    it "closes connection to AMQP server" do
-    end
-  end
 end
