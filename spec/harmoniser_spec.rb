@@ -14,4 +14,16 @@ RSpec.describe Harmoniser do
       expect(described_class).to respond_to(:configure)
     end
   end
+
+  describe ".default_configuration" do
+    it "respond_to default_configuration" do
+      expect(described_class).to respond_to(:default_configuration)
+    end
+  end
+
+  describe ".logger" do
+    it "respond_to logger" do
+      expect(described_class).to respond_to(:logger)
+    end
+  end
 end

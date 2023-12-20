@@ -1,6 +1,6 @@
 module Harmoniser
   class Launcher
-    def initialize(configuration: Harmoniser.configuration, logger: Harmoniser.logger)
+    def initialize(configuration:, logger:)
       @configuration = configuration
       @logger = logger
     end
@@ -8,10 +8,6 @@ module Harmoniser
     def start
       boot_app
       start_subscribers
-    end
-
-    def stop
-      stop_subscribers
     end
 
     private
@@ -31,11 +27,6 @@ module Harmoniser
         klass.harmoniser_subscriber_start
       end
       @logger.info("Subscribers registered to consume messages from queues: klasses = `#{klasses}`")
-    end
-
-    def stop_subscribers
-      @logger.info("Connection will be closed: connection = `#{@configuration.connection}`")
-      @configuration.connection.close
     end
 
     private

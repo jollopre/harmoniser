@@ -20,6 +20,6 @@ module Harmoniser
       @configuration ||= Configuration.new
     end
 
-    def_delegators :configuration, :logger, :connection
+    def_delegators :configuration, :connection, :connection?
   end
 end
