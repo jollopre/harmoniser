@@ -3,12 +3,14 @@ require "json"
 require "harmoniser"
 
 Harmoniser.configure do |config|
+  # Configure the connection options for connection to RabbitMQ
   config.connection_opts = {
     host: "rabbitmq"
   }
+  # Define topology for multicast messaging
   config.define_topology do |topology|
-    topology.add_exchange(:topic, "my_topic_exchange", durable: true)
-    topology.add_queue("my_queue", durable: true)
+    topology.add_exchange(:topic, "my_topic_exchange", auto_delete: true)
+    topology.add_queue("my_queue", auto_delete: true)
     topology.add_binding(
       "my_topic_exchange",
       "my_queue",
@@ -29,10 +31,7 @@ class MySubscriber
 
   class << self
     def on_delivery(delivery_info, properties, payload)
-      Harmoniser.logger.info({
-        body: "message received",
-        payload: payload
-      }.to_json)
+      puts "Message received: queue = `#{delivery_info.consumer.queue}, payload = `#{payload}`"
     end
   end
 end

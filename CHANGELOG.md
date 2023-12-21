@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0] - 2023-12-30
+
+### Added
+- Create a channel for each class including Harmoniser::Publisher or Harmoniser::Subscriber. A mutex in the context of the class including Publisher or Subscriber modules control access to the resources created as well as guarantees safe publication under multi-thread process.
+- Introduce broadcast and unicast examples.
+- Amend specs to wipe out RabbitMQ resources created during spec execution.
+
+### Changed
+- Honour verbose option regardless of the environment configuration set. For instance, for non-production environment, verbose is no longer verbose set by default.
+
 ## [0.5.0] - 2023-12-20
 
 ### Added

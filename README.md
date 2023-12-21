@@ -51,7 +51,7 @@ end
 MyPublisher.publish({ salute: "Hello World!" }.to_json, routing_key: "my_resource.foo.bar")
 ```
 
-The code above assumes that the exchange is already defined. We'd like to emphasize that defining RabbitMQ topology (exchanges, queues and binding) should be performed outside of the class whose role is purely focused on publishing. See more details about how to define the topology [here](examples/multicast.rb#L9-L18).
+The code above assumes that the exchange is already defined. We'd like to emphasize that defining RabbitMQ topology (exchanges, queues and binding) should be performed outside of the class whose role is purely focused on publishing. See more details about how to define the topology [here](examples/multicast.rb#L11-L19).
 
 ### RabbitMQ
 
@@ -78,19 +78,10 @@ Harmoniser server is a process specifically dedicated to run Subscribers that ar
 class MySubscriber
   include Harmoniser::Subscriber
   harmoniser_subscriber queue_name: "my_queue"
-
-  class << self
-    def on_delivery(delivery_info, properties, payload)
-      Harmoniser.logger.info({
-        body: "message received",
-        payload: payload
-      }.to_json)
-    end
-  end
 end
 ```
 
-The code above assumes that the queue and its binding to an exchange are already defined. You can see more details about how this is specified [here](examples/multicast.rb#L9-L18).
+The code above assumes that the queue and its binding to an exchange are already defined. You can see more details about how this is specified [here](examples/multicast.rb#L11-L19).
 
 In order for the subscribers to receive messages from a queue, you should spin up a dedicated Ruby process like following:
 
