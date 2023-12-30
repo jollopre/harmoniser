@@ -7,8 +7,6 @@ module Harmoniser
     class MissingConsumerDefinition < StandardError; end
     include Channelable
     include Includable
-    MUTEX = Mutex.new
-    private_constant :MUTEX
 
     module ClassMethods
       def harmoniser_subscriber(queue_name:, consumer_tag: nil, no_ack: true, exclusive: false, arguments: {})
@@ -22,7 +20,7 @@ module Harmoniser
       end
 
       def harmoniser_subscriber_start
-        MUTEX.synchronize do
+        const_get(:HARMONISER_SUBSCRIBER_MUTEX).synchronize do
           @harmoniser_consumer ||= create_consumer
         end
       end
@@ -32,10 +30,11 @@ module Harmoniser
       def create_consumer
         raise_missing_consumer_definition unless @harmoniser_consumer_definition
 
+        channel = Subscriber.create_channel
         consumer = Bunny::Consumer.new(
-          Subscriber.harmoniser_channel,
+          channel,
           @harmoniser_consumer_definition.queue_name,
-          @harmoniser_consumer_definition.consumer_tag || Subscriber.harmoniser_channel.generate_consumer_tag,
+          @harmoniser_consumer_definition.consumer_tag || channel.generate_consumer_tag,
           @harmoniser_consumer_definition.no_ack,
           @harmoniser_consumer_definition.exclusive,
           @harmoniser_consumer_definition.arguments
@@ -77,6 +76,7 @@ module Harmoniser
 
     class << self
       def included(base)
+        base.const_set(:HARMONISER_SUBSCRIBER_MUTEX, Mutex.new)
         base.extend(ClassMethods)
         harmoniser_register_included(base)
       end

@@ -5,8 +5,6 @@ module Harmoniser
   module Publisher
     class MissingExchangeDefinition < StandardError; end
     include Channelable
-    MUTEX = Mutex.new
-    private_constant :MUTEX
 
     module ClassMethods
       def harmoniser_publisher(exchange_name:)
@@ -20,7 +18,7 @@ module Harmoniser
       def publish(payload, opts = {})
         raise_missing_exchange_definition unless @harmoniser_exchange_definition
 
-        MUTEX.synchronize do
+        const_get(:HARMONISER_PUBLISHER_MUTEX).synchronize do
           harmoniser_exchange.publish(payload, opts)
         end
         Harmoniser.logger.debug { "Message published: payload = `#{payload}`, opts = `#{opts}`" }
@@ -31,10 +29,8 @@ module Harmoniser
       private
 
       def harmoniser_exchange
-        return @harmoniser_exchange if @harmoniser_exchange
-
         @harmoniser_exchange ||= Bunny::Exchange.new(
-          Publisher.harmoniser_channel,
+          Publisher.create_channel,
           @harmoniser_exchange_definition.type,
           @harmoniser_exchange_definition.name,
           @harmoniser_exchange_definition.opts
@@ -48,6 +44,7 @@ module Harmoniser
 
     class << self
       def included(base)
+        base.const_set(:HARMONISER_PUBLISHER_MUTEX, Mutex.new)
         base.extend(ClassMethods)
       end
     end

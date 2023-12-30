@@ -175,12 +175,10 @@ RSpec.describe Harmoniser::Topology do
     context "broadcast routing" do
       subject { described_class.new }
 
-      it "creates a fanout exchange and a couple of queues bound to it" do
-        subject.add_exchange(:fanout, "broadcast_exchange")
-        subject.add_queue("queue_broadcast_exchange")
-        subject.add_queue("another_queue_broadcast_exchange")
+      it "creates a fanout exchange and a queue bound to it" do
+        subject.add_exchange(:fanout, "broadcast_exchange", auto_delete: true)
+        subject.add_queue("queue_broadcast_exchange", auto_delete: true)
         subject.add_binding("broadcast_exchange", "queue_broadcast_exchange")
-        subject.add_binding("broadcast_exchange", "another_queue_broadcast_exchange")
 
         subject.declare
 
@@ -192,42 +190,33 @@ RSpec.describe Harmoniser::Topology do
               vhost: "/",
               type: "fanout",
               durable: false,
-              auto_delete: false,
+              auto_delete: true,
               internal: false,
               arguments: {}
             )
           )
         )
-      end
-    end
-
-    context "unicast routing" do
-      subject { described_class.new }
-
-      it "creates a direct exchange and a couple of queues with different routing key" do
-        skip("TODO")
-        subject.add_exchange(:direct, "unicast_exchange")
-        subject.add_queue("queue1_unicast_exchange")
-        subject.add_queue("queue2_unicast_exchange")
-        subject.add_binding("unicast_exchange", "queue1_unicast_exchange", routing_key: "queue1")
-        subject.add_binding("unicast_exchange", "queue2_unicast_exchange", routing_key: "queue2")
-
-        subject.declare
-      end
-    end
-
-    context "multicast routing" do
-      subject { described_class.new }
-
-      it "creates a topic exchange and a couple of queues with different routing key" do
-        skip("TODO")
-        subject.add_exchange(:topic, "multicast_exchange")
-        subject.add_queue("queue1_multicast_exchange")
-        subject.add_queue("queue2_multicast_exchange")
-        subject.add_binding("multicast_exchange", "queue1_multicast_exchange", routing_key: "foo.#")
-        subject.add_binding("multicast_exchange", "queue2_multicast_exchange", routing_key: "foo.*")
-
-        subject.declare
+        expect(definitions).to include(
+          queues: include(
+            hash_including(
+              name: "queue_broadcast_exchange",
+              vhost: "/",
+              durable: false,
+              auto_delete: true,
+              arguments: {}
+            )
+          )
+        )
+        expect(definitions).to include(
+          bindings: include(
+            source: "broadcast_exchange",
+            vhost: "/",
+            destination: "queue_broadcast_exchange",
+            destination_type: "queue",
+            routing_key: "",
+            arguments: {}
+          )
+        )
       end
     end
   end

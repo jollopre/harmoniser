@@ -104,11 +104,10 @@ RSpec.describe Harmoniser::Configuration do
       expect(subject.logger.debug?).to eq(false)
     end
 
-    context "when environment is NOT production" do
-      before { ENV["RACK_ENV"] = "test" }
-      after { ENV.delete("RACK_ENV") }
+    context "when is verbose mode" do
+      it "severity is DEBUG" do
+        subject.options_with(verbose: true)
 
-      it "severity is DEBUG by default" do
         expect(subject.logger.debug?).to eq(true)
       end
     end
@@ -130,24 +129,6 @@ RSpec.describe Harmoniser::Configuration do
         expect do
           subject.options_with(wadus: true)
         end.to raise_error(ArgumentError)
-      end
-    end
-
-    context "when environment is passed" do
-      context "being production" do
-        it "logger severity is INFO" do
-          subject.options_with(environment: "production")
-
-          expect(subject.logger.debug?).to eq(false)
-        end
-      end
-
-      context "not being production" do
-        it "logger severity is DEBUG" do
-          subject.options_with(environment: "wadus")
-
-          expect(subject.logger.debug?).to eq(true)
-        end
       end
     end
 

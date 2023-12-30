@@ -11,12 +11,6 @@ RSpec.describe Harmoniser::Publisher do
   end
   let(:exchange_name) { "harmoniser_publisher_exchange" }
 
-  it "MUTEX constant is private" do
-    expect do
-      klass::MUTEX
-    end.to raise_error(NameError, /private constant/)
-  end
-
   describe ".harmoniser_publisher" do
     it "return a Definition::Exchange" do
       result = klass.harmoniser_publisher(exchange_name: exchange_name)
@@ -28,13 +22,10 @@ RSpec.describe Harmoniser::Publisher do
 
   describe ".publish" do
     before do
-      channel = bunny.create_channel
-      exchange = Bunny::Exchange.new(channel, :direct, exchange_name)
-      queue = Bunny::Queue.new(channel).bind(exchange)
-      queue.subscribe do |_, _, _|
+      declare_exchange(exchange_name)
+      declare_queue("", exchange_name).subscribe do |_, _, _|
         @consumed = true
       end
-
       klass.harmoniser_publisher(exchange_name: exchange_name)
     end
 
@@ -49,17 +40,35 @@ RSpec.describe Harmoniser::Publisher do
       end.not_to raise_error
     end
 
-    it "logs the message published" do
-      expect do
-        klass.publish("foo")
-      end.to output(/DEBUG -- .*Message published/).to_stdout_from_any_process
-    end
-
-    it "channel is shared across publications" do
+    it "channel is shared across publisher publications" do
       result1 = klass.publish("foo").channel
       result2 = klass.publish("bar").channel
 
       expect(result1.object_id).to eq(result2.object_id)
+    end
+
+    it "channel is dedicated to each publisher" do
+      another_klass = Class.new { include Harmoniser::Publisher }
+      another_klass.harmoniser_publisher(exchange_name: exchange_name)
+      exchange = klass.publish("foo")
+      another_exchange = another_klass.publish("foo")
+
+      expect(exchange.channel).not_to eq(another_exchange.channel)
+    end
+
+    context "when verbose mode is set" do
+      before do
+        Harmoniser.configure { |config| config.options_with(verbose: true) }
+      end
+      after do
+        Harmoniser.configure { |config| config.options_with(verbose: false) }
+      end
+
+      it "logs the message published" do
+        expect do
+          klass.publish("foo")
+        end.to output(/DEBUG -- .*Message published/).to_stdout_from_any_process
+      end
     end
 
     context "when exchange does not exist" do
@@ -93,10 +102,6 @@ RSpec.describe Harmoniser::Publisher do
     context "handle errors" do
       # TODO handler for Channel#on_error as well as
       # Channel#on_uncaught_exception
-    end
-
-    context "handle OS signals" do
-      # TODO decide whether or not closing connection, channels opened by Publishers when SIGINT, SIGTERM is received
     end
   end
 end

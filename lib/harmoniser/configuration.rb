@@ -40,11 +40,7 @@ module Harmoniser
     end
 
     def set_logger_severity
-      @logger.level = if @options.production?
-        @options.verbose? ? Logger::DEBUG : Logger::INFO
-      else
-        Logger::DEBUG
-      end
+      @logger.level = @options.verbose? ? Logger::DEBUG : Logger::INFO
     end
   end
 end
