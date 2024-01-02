@@ -8,13 +8,13 @@ module Harmoniser
       @options = {}
       @option_parser = OptionParser.new do |opts|
         opts.banner = "harmoniser [options]"
-        opts.on "-e", "--environment ENV", "Application environment" do |arg|
+        opts.on "-e", "--environment ENV", "Set the application environment (defaults to inferred environment or 'production')" do |arg|
           @options[:environment] = arg
         end
-        opts.on "-r", "--require [PATH|DIR]", "File to require or location of Rails application" do |arg|
+        opts.on "-r", "--require [PATH|DIR]", "Specify a file to require or the location of the Rails application" do |arg|
           @options[:require] = arg
         end
-        opts.on("-v", "--[no-]verbose", "Run verbosely") do |arg|
+        opts.on("-v", "--[no-]verbose", "Run verbosely (set log severity to 'debug' for detailed RabbitMQ interactions)") do |arg|
           @options[:verbose] = arg
         end
         opts.on "-V", "--version", "Print version and exit" do

@@ -3,9 +3,12 @@
 [![Gem Version](https://badge.fury.io/rb/harmoniser.svg)](https://badge.fury.io/rb/harmoniser)
 ![CI workflow](https://github.com/jollopre/harmoniser/actions/workflows/ci.yml/badge.svg)
 
-A minimalistic approach to communicating with RabbitMQ.
+Harmoniser is a minimalistic approach to interact with the RabbitMQ implementation of [AMQP 0-9-1](https://www.rabbitmq.com/amqp-0-9-1-reference.html) through [Bunny](https://github.com/ruby-amqp/bunny).
 
-Harmoniser uses [Bunny](https://github.com/ruby-amqp/bunny) as a low level library to communicate with RabbitMQ in order to integrate publishing and messages consuming.
+* Harmoniser provides a long-lived [connection](https://www.rabbitmq.com/connections.html) to RabbitMQ for efficient publishing and consuming of messages.
+* Harmoniser issues a thread-safe dedicated [channel](https://www.rabbitmq.com/channels.html) for each publish/consume use case defined.
+* Harmoniser offers a concise DSL to differentiate topology definition from other actions such as publishing or consuming.
+* Harmoniser may run as a dedicated Ruby Process through its [CLI](https://github.com/jollopre/harmoniser/wiki/Harmoniser-CLI) as well as a part of other processes like Puma, Unicorn, Sidekiq, or similar.
 
 ## Getting Started
 
@@ -17,28 +20,27 @@ gem "harmoniser"
 
 2. Install the gem:
 
-```ruby
+```sh
   $ bundle install
 ```
 
-3. Include `Harmoniser::Publisher` and/or `Harmoniser::Subscriber` in your classes. For instance, [this scenario](examples/multicast.rb) assumes that you'd like to run publishers and subscriber under the same process.
+3. Include `Harmoniser::Publisher` and/or `Harmoniser::Subscriber` in your classes. For instance, in [this scenario](examples/multicast.rb), it is assumed that you would like to run publishers and subscribers under the same process.
 
-4. (Optional) Run the dedicated process for Harmoniser in order to process messages from your subscribers:
+4. (Optional) Run Harmoniser CLI in order to process messages from your subscribers:
 
 ```sh
   $ bundle exec harmoniser --require ./examples/multicast.rb
 ```
 
-5. Inspect the logs to see if everything worked as expected. Look for logs including `harmoniser@`.
+5. Inspect the logs to see if everything worked as expected. Look for logs containing `harmoniser@`.
 
 ## Concepts
 
-Harmoniser is a library for publishing/consuming messages through RabbitMQ. It allows to not only connect applications but also to scale an application by performing work in the background. This gem is comprised of three parts:
+Harmoniser is a library for publishing/consuming messages through RabbitMQ. It enables not only the connection of applications but also the scaling of an application by performing work in the background. This gem is comprised of three parts:
 
 ### Publisher
 
-The Publisher runs in any Ruby process (puma, unicorn, passenger, sidekiq, etc) and allows you to
-push messages through a [RabbitMQ Exchange](https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges). Creating a publisher is as simple as:
+The Publisher runs in any Ruby process (puma, unicorn, passenger, sidekiq, etc) and enables you to push messages through a [RabbitMQ Exchange](https://www.rabbitmq.com/tutorials/amqp-concepts.html#exchanges). Creating a publisher is as simple as:
 
 ```ruby
 require "harmoniser"
@@ -51,11 +53,11 @@ end
 MyPublisher.publish({ salute: "Hello World!" }.to_json, routing_key: "my_resource.foo.bar")
 ```
 
-The code above assumes that the exchange is already defined. We'd like to emphasize that defining RabbitMQ topology (exchanges, queues and binding) should be performed outside of the class whose role is purely focused on publishing. See more details about how to define the topology [here](examples/multicast.rb#L11-L19).
+The code above assumes that the exchange is already defined. We would like to emphasize that defining RabbitMQ topology (exchanges, queues and bindings) should be performed outside of the class whose role is purely focused on publishing. For more details on how to define the topology, refer to [this example](examples/multicast.rb#L11-L19).
 
 ### RabbitMQ
 
-RabbitMQ is the message broker used to publish/consume messages through Harmoniser. It can be configured through `Harmoniser.configure` as follows:
+RabbitMQ is the message broker used to publish/consume messages through Harmoniser. It can be configured using `Harmoniser.configure` as follows:
 
 ```ruby
 require "harmoniser"
@@ -67,12 +69,11 @@ Harmoniser.configure do |config|
 end
 ```
 
-The options permitted for `connection_opts` are those accepted by
-[Bunny](https://github.com/ruby-amqp/bunny/blob/80a8fc7aa0cd73f8778df87ae05f28c443d10c0d/lib/bunny/session.rb#L142) since at the end this library is built on top of the most widely used Ruby client for RabbitMQ.
+The options permitted for `connection_opts` are those accepted by [Bunny](https://github.com/ruby-amqp/bunny/blob/main/docs/guides/connecting.md#using-a-map-of-parameters) since Harmoniser is built on top of the widely used Ruby client for RabbitMQ.
 
-### Subscriber Server
+### Harmoniser Server
 
-Harmoniser server is a process specifically dedicated to run Subscribers that are listening into [Rabbit Queues](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queues). This process like any other Ruby process (puma, unicorn, passenger, sidekiq, etc) is up and running unless OS Signals like (SIGINT, SIGTERM) are sent to it. The server during boot time is able to register each class from your code that includes `Harmoniser::Subscriber` module. Creating a subscriber is as simple as:
+Harmoniser server is a process specifically dedicated to running Subscribers that listen to [Rabbit Queues](https://www.rabbitmq.com/tutorials/amqp-concepts.html#queues). Like any other Ruby process (puma, unicorn, passenger, sidekiq, etc), Harmoniser remains up and running unless OS Signals such as SIGINT or SIGTERM  are sent to it. During boot time, the server can register each class from your code that includes `Harmoniser::Subscriber` module. Creating a subscriber is as simple as:
 
 ```ruby
 class MySubscriber
@@ -81,25 +82,25 @@ class MySubscriber
 end
 ```
 
-The code above assumes that the queue and its binding to an exchange are already defined. You can see more details about how this is specified [here](examples/multicast.rb#L11-L19).
+The code above assumes that the queue and its binding to an exchange are already defined. You can find more details about how this is specified [here](examples/multicast.rb#L11-L19).
 
-In order for the subscribers to receive messages from a queue, you should spin up a dedicated Ruby process like following:
+To enable subscribers to receive messages from a queue, you should spin up a dedicated Ruby process as follows:
 
 ```sh
   $ bundle exec harmoniser --require ./a_path_to_your_ruby_file.rb
 ```
 
-More info about the different options accepted by harmoniser process in [Harmoniser CLI](docs/cli.md).
+For more information about the various options accepted by the Harmoniser process, refer to the [Harmoniser CLI documentation](https://github.com/jollopre/harmoniser/wiki/Harmoniser-CLI).
 
 ## Contributing
 
-If you are facing issues and you suspect are related to Harmoniser, please consider opening an issue [here](https://github.com/jollopre/harmoniser/issues). Remember to include as much information as possible such as version of Ruby, Rails, Harmoniser, OS, etc.
+If you are facing issues that you suspect are related to Harmoniser, please consider opening an issue [here](https://github.com/jollopre/harmoniser/issues). Remember to include as much information as possible such as version of Ruby, Rails, Harmoniser, OS, etc.
 
-If you consider you have encountered a potential bug, detailed information about how to reproduce it might help to speed up its fix.
+If you believe you have encountered a potential bug, providing detailed information about how to reproduce it can greatly expedite the fix.
 
 ### Code
 
-In order to contribute to this codebase, you will need to setup your local development using the following steps:
+To contribute to this codebase, you will need to setup your local development using the following steps:
 
 ```sh
 # Prepare the environment for working locally.
@@ -108,14 +109,13 @@ In order to contribute to this codebase, you will need to setup your local devel
   $ make test
 ```
 
-You can also shell into the running container by executing `$ make shell` and from within execute anything related to Harmoniser on its isolated environment.
+You can also access the running container by executing `$ make shell` and then execute any commands related to Harmoniser within its isolated environment.
 
 ## Future Improvements
 
-- [ ] Issue: Reopen memoized Channel in the context of the class that are included. There are scenarios for which the channel gets closed, for instance Precondition Failed when checking an exchange declaration.
+- [ ] Feature: Introduce capability of configuring concurrency for Harmoniser process.
+- [ ] Issue: Reopen Channels anytime an exception occurs that closes them automatically. More info can be found [here](https://www.rabbitmq.com/channels.html#error-handling).
 - [ ] Chore: Introduce simplecov gem for code coverage.
-- [ ] Feature: Add default `on_return` handler as well as permitting the definition of on_return method to be called anytime a published message gets returned.
-- [ ] Feature: Introduce capability of configuring number of threads for queue consuming at the CLI.
 
 ## License
 
