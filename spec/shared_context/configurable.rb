@@ -11,7 +11,7 @@ RSpec.shared_context "configurable" do
 
   def declare_exchange(name)
     channel = bunny.create_channel
-    Bunny::Exchange.new(channel, :direct, exchange_name, {auto_delete: true})
+    Bunny::Exchange.new(channel, :direct, name, {auto_delete: true})
   end
 
   def declare_queue(name, exchange_name)

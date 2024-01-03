@@ -81,7 +81,7 @@ RSpec.describe Harmoniser::Publisher do
       end
     end
 
-    context "when Exchange definition is not provider" do
+    context "when Exchange definition is not provided" do
       before { klass.instance_variable_set(:@harmoniser_exchange_definition, nil) }
 
       it "raises MissingExchangeDefinition" do
@@ -91,17 +91,29 @@ RSpec.describe Harmoniser::Publisher do
       end
     end
 
-    context "on_return" do
-      # TODO handler for when a published message gets returned
-    end
-
     context "serialisation" do
       # TODO decide whether or not seriliazers are introduced into this gem
     end
 
-    context "handle errors" do
-      # TODO handler for Channel#on_error as well as
-      # Channel#on_uncaught_exception
+    context "when a mandatory message cannot be routed" do
+      let(:klass) do
+        Class.new do
+          include Harmoniser::Publisher
+        end
+      end
+
+      before do
+        declare_exchange("exchange_without_queues")
+        klass.harmoniser_publisher(exchange_name: "exchange_without_queues")
+      end
+
+      it "log with warn severity is output" do
+        expect do
+          klass.publish("foo", mandatory: true)
+          # TODO find a better way to test this since AMQ::Protocol::Basic::Return comes async after the publication is completed
+          sleep 0.2
+        end.to output(/WARN -- .*Default on_return handler executed for exchange/).to_stdout_from_any_process
+      end
     end
   end
 end

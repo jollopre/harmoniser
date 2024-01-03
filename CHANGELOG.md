@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0] - 2024-01-03
+
+### Added
+- Add a default on_return callback for Publisher. When a message marked as mandatory is published and cannot be routed to any queue, a detailed log is output.
+
+### Changed
+- Improve README to highlight Harmoniser golden features
+- Shorten the gemspec summary
+
+### Removed
+- Delete docs folder since github wiki is the way to document the library.
+- Delete .travis.yml since we no longer use for CI/CD integration.
+
 ## [0.6.0] - 2023-12-30
 
 ### Added

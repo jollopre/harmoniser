@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Jose Lloret"]
   spec.email = ["jollopre@gmail.com"]
 
-  spec.summary = "A minimalistic approach to communicating with RabbitMQ"
-  spec.description = "A declarative approach to communicating with RabbitMQ that makes it easy to integrate publishing and consuming messages"
+  spec.summary = "A minimalistic approach to interact with RabbitMQ"
+  spec.description = "A declarative approach to communication with RabbitMQ that simplifies the integration of publishing and consuming messages."
   spec.homepage = "https://github.com/jollopre/harmoniser"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2"
