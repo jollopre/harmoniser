@@ -44,16 +44,4 @@ RSpec.describe Harmoniser::Channelable do
       end.to output(/ERROR -- .*Default on_error handler executed for channel:/).to_stdout_from_any_process
     end
   end
-
-  context "when an error occurs consuming a message" do
-    it "log with error severity is output" do
-      channel = klass.harmoniser_channel
-      on_uncaught_exception = channel.instance_variable_get(:@uncaught_exception_handler)
-      consumer = Bunny::Consumer.new(channel, "a_queue")
-
-      expect do
-        on_uncaught_exception.call(StandardError.new("wadus"), consumer)
-      end.to output(/ERROR -- .*Default on_uncaught_exception handler executed for channel/).to_stdout_from_any_process
-    end
-  end
 end

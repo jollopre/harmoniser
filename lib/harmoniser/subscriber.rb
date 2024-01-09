@@ -1,6 +1,7 @@
 require "harmoniser/channelable"
 require "harmoniser/definition"
 require "harmoniser/includable"
+require "harmoniser/subscriber/retrier"
 
 module Harmoniser
   module Subscriber
@@ -39,8 +40,10 @@ module Harmoniser
           @harmoniser_consumer_definition.exclusive,
           @harmoniser_consumer_definition.arguments
         )
+        retrier = Retrier.new(channel: channel, klass: self, max_retries: 2, queue_name: @harmoniser_consumer_definition.queue_name)
         handle_cancellation(consumer)
-        handle_delivery(consumer)
+        handle_delivery(consumer, retrier)
+        handle_uncaught_exception(consumer)
         register_consumer(consumer)
         consumer
       end
@@ -55,14 +58,22 @@ module Harmoniser
         end
       end
 
-      def handle_delivery(consumer)
+      def handle_delivery(consumer, retrier)
         consumer.on_delivery do |delivery_info, properties, payload|
           if respond_to?(:on_delivery)
-            on_delivery(delivery_info, properties, payload)
+            retrier.try_on_delivery(delivery_info, properties, payload)
           else
             Harmoniser.logger.info("Default on_delivery handler executed for consumer: consumer_tag = `#{consumer.consumer_tag}`, queue = `#{consumer.queue}`")
           end
         end
+      end
+
+      def handle_uncaught_exception(consumer)
+        consumer.channel.on_uncaught_exception(&method(:on_uncaught_exception).to_proc)
+      end
+
+      def on_uncaught_exception(error, consumer)
+        Harmoniser.logger.error("Default on_uncaught_exception handler executed for channel: error_class = `#{error.class}`, error_message = `#{error.message}`, error_backtrace = `#{error.backtrace&.first(5)}, queue = `#{consumer.queue}`")
       end
 
       def register_consumer(consumer)

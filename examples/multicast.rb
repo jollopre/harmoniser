@@ -28,10 +28,15 @@ end
 class MySubscriber
   include Harmoniser::Subscriber
   harmoniser_subscriber queue_name: "my_queue"
+  #harmoniser_subscriber_options retry: 5
 
   class << self
     def on_delivery(delivery_info, properties, payload)
-      puts "Message received: queue = `#{delivery_info.consumer.queue}, payload = `#{payload}`"
+      puts "Message received: queue = `#{delivery_info.consumer.queue}, payload = `#{payload}`, properties = `#{properties}`"
+      raise "wtf"
+    end
+
+    def on_retries_exhausted(queue_name, properties, payload, exception)
     end
   end
 end

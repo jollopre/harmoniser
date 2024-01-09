@@ -1,3 +1,4 @@
+require "timeout"
 require "harmoniser/subscriber"
 require "shared_context/configurable"
 
@@ -109,7 +110,6 @@ RSpec.describe Harmoniser::Subscriber do
         klass.harmoniser_subscriber_start
 
         expect do
-          require "timeout"
           Timeout.timeout(2) do
             until klass.consumed?; end
           end
@@ -185,6 +185,40 @@ RSpec.describe Harmoniser::Subscriber do
         expect do
           consumer.handle_cancellation(basic_cancel)
         end.to output(/INFO -- .*Default on_cancellation handler executed for consumer: consumer_tag = `#{basic_cancel.consumer_tag}`, queue = `#{consumer.queue}`/).to_stdout_from_any_process
+      end
+    end
+  end
+
+  context "default on_uncaught_exception" do
+    let(:exchange_name) { "harmoniser_publisher_exchange" }
+    let(:queue_name) { "queue_harmoniser_publisher_exchange_with_errors" }
+    let!(:exchange) { declare_exchange(exchange_name) }
+    let!(:queue) { declare_queue(queue_name, exchange.name) }
+    let(:klass) do
+      Class.new do
+        include Harmoniser::Subscriber
+        harmoniser_subscriber(queue_name: "queue_harmoniser_publisher_exchange_with_errors")
+
+        class << self
+          def delivered?
+            @delivered
+          end
+
+          def on_delivery(delivery_info, properties, payload)
+            @delivered = true
+            raise "Something went wrong"
+          end
+        end
+      end
+    end
+
+    it "logs the error produced in consumer with error severity" do
+      expect(Harmoniser.logger).to receive(:error).with(/Default on_uncaught_exception handler executed for channel: error_class = `RuntimeError`, error_message = `Something went wrong`/)
+
+      klass.harmoniser_subscriber_start
+      exchange.publish("foo")
+      Timeout.timeout(2) do
+        until klass.delivered?; end
       end
     end
   end
