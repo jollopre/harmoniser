@@ -20,13 +20,60 @@ RSpec.describe Harmoniser::Connection do
     expect(subject).to respond_to(:recovering_from_network_failure?)
   end
 
-  it "responds to start" do
-    expect(subject).to respond_to(:start)
-  end
-
   describe "#to_s" do
     it "returns a string representation of the connection" do
       expect(subject.to_s).to eq("<Harmoniser::Connection>: guest@127.0.0.1:5672, connection_name = `wadus`, vhost = `/`")
+    end
+  end
+
+  describe "#start" do
+    let(:bunny) { subject.instance_variable_get(:@bunny) }
+
+    it "retries establishing connection until succeeding" do
+      allow(Harmoniser.logger).to receive(:error)
+      allow(subject).to receive(:sleep)
+      allow(bunny).to receive(:start) do
+        @retries ||= 0
+        if @retries < 2
+          @retries += 1
+          raise "Error"
+        end
+      end
+
+      subject.start
+
+      expect(Harmoniser.logger).to have_received(:error).with(/Connection attempt failed: retries = `.*`, error_class = `RuntimeError`, error_message = `Error`/).twice
+    end
+  end
+
+  describe "#close" do
+    let(:bunny) { subject.instance_variable_get(:@bunny) }
+
+    it "returns true" do
+      allow(bunny).to receive(:close)
+
+      result = subject.close
+
+      expect(result).to eq(true)
+    end
+
+    context "when closing connection fails" do
+      it "returns false" do
+        allow(bunny).to receive(:close).and_raise("Error")
+
+        result = subject.close
+
+        expect(result).to eq(false)
+      end
+
+      it "log with error severity is output" do
+        allow(bunny).to receive(:close).and_raise("Error")
+        allow(Harmoniser.logger).to receive(:error)
+
+        subject.close
+
+        expect(Harmoniser.logger).to have_received(:error).with(/Connection#close failed: error_class = `RuntimeError`, error_message = `Error`/)
+      end
     end
   end
 end

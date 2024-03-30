@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.0] - 2024-03-31
+
+### Added
+- Implement retry mechanism to establish connection to RabbitMQ. More details at [issue](https://github.com/jollopre/harmoniser/issues/39).
+- Strengthen at_exit hook to not break when connection cannot be closed.
+
 ## [0.7.0] - 2024-01-03
 
 ### Added

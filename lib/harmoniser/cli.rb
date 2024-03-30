@@ -22,7 +22,6 @@ module Harmoniser
 
     def call
       parse_options
-      define_signals
       run
     end
 
@@ -49,6 +48,8 @@ module Harmoniser
       Launcher
         .new(configuration: configuration, logger: logger)
         .start
+
+      define_signals
 
       while @read_io.wait_readable
         signal = @read_io.gets.strip

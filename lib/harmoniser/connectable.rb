@@ -37,11 +37,10 @@ module Harmoniser
       logger = Harmoniser.logger
 
       logger.info("Shutting down!")
-      if connection? && connection.open?
-        stringified_connection = connection.to_s
-        logger.info("Connection will be closed: connection = `#{stringified_connection}`")
-        connection.close
-        logger.info("Connection closed: connection = `#{stringified_connection}`")
+      if connection? && @connection.open?
+        logger.info("Connection will be closed: connection = `#{@connection}`")
+        @connection.close
+        logger.info("Connection closed: connection = `#{@connection}`")
       end
       logger.info("Bye!")
     end
