@@ -27,7 +27,7 @@ module Harmoniser
       write_timeout: 5
     }
 
-    def_delegators :@bunny, :close, :create_channel, :open?, :recovering_from_network_failure?, :start
+    def_delegators :@bunny, :create_channel, :open?, :recovering_from_network_failure?
 
     def initialize(opts)
       @bunny = Bunny.new(opts)
@@ -35,6 +35,26 @@ module Harmoniser
 
     def to_s
       "<#{self.class.name}>: #{user}@#{host}:#{port}, connection_name = `#{connection_name}`, vhost = `#{vhost}`"
+    end
+
+    def start
+      retries = 0
+      begin
+        with_signal_handler { @bunny.start }
+      rescue => e
+        Harmoniser.logger.error("Connection attempt failed: retries = `#{retries}`, error_class = `#{e.class}`, error_message = `#{e.message}`")
+        with_signal_handler { sleep(1) }
+        retries += 1
+        retry
+      end
+    end
+
+    def close
+      @bunny.close
+      true
+    rescue => e
+      Harmoniser.logger.error("Connection#close failed: error_class = `#{e.class}`, error_message = `#{e.message}`")
+      false
     end
 
     private
@@ -57,6 +77,13 @@ module Harmoniser
 
     def vhost
       @bunny.vhost
+    end
+
+    def with_signal_handler
+      yield if block_given?
+    rescue SignalException => e
+      Harmoniser.logger.info("Signal received: signal = `#{Signal.signame(e.signo)}`")
+      exit(0)
     end
   end
 end
