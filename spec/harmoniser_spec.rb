@@ -26,4 +26,20 @@ RSpec.describe Harmoniser do
       expect(described_class).to respond_to(:logger)
     end
   end
+
+  describe ".server?" do
+    it "returns false" do
+      expect(described_class.server?).to eq(false)
+    end
+
+    context "when `CLI` is loaded" do
+      before do
+        load "harmoniser/cli.rb"
+      end
+
+      it "returns true" do
+        expect(described_class.server?).to eq(true)
+      end
+    end
+  end
 end

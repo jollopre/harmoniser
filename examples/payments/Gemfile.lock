@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/jollopre/harmoniser.git
-  revision: 149010762c0595386615692ced7452c844ecff8d
+  revision: e0aeac1691e4db1021c19a1c44d5285fdd5bd659
   specs:
-    harmoniser (0.4.0)
+    harmoniser (0.8.0)
       bunny (~> 2.22)
 
 GEM
@@ -183,7 +183,7 @@ GEM
     reline (0.4.1)
       io-console (~> 0.5)
     ruby2_keywords (0.0.5)
-    set (1.0.4)
+    set (1.1.0)
     sorted_set (1.0.3)
       rbtree
       set (~> 1.0)

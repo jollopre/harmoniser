@@ -83,7 +83,7 @@ module Harmoniser
       yield if block_given?
     rescue SignalException => e
       Harmoniser.logger.info("Signal received: signal = `#{Signal.signame(e.signo)}`")
-      exit(0)
+      Harmoniser.server? ? exit(0) : raise
     end
   end
 end

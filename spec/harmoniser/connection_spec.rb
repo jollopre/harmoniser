@@ -27,6 +27,10 @@ RSpec.describe Harmoniser::Connection do
   end
 
   describe "#start" do
+    before do
+      allow(subject).to receive(:exit)
+    end
+
     let(:bunny) { subject.instance_variable_get(:@bunny) }
 
     it "retries establishing connection until succeeding" do
@@ -43,6 +47,28 @@ RSpec.describe Harmoniser::Connection do
       subject.start
 
       expect(Harmoniser.logger).to have_received(:error).with(/Connection attempt failed: retries = `.*`, error_class = `RuntimeError`, error_message = `Error`/).twice
+    end
+
+    context "when a OS signal is received while connecting" do
+      before do
+        allow(bunny).to receive(:start).and_raise(SignalException.new("SIGINT"))
+      end
+
+      context "and harmoniser is the main process" do
+        before { allow(Harmoniser).to receive(:server?).and_return(true) }
+
+        it "invokes exit with zero" do
+          subject.start
+
+          expect(subject).to have_received(:exit).with(0)
+        end
+      end
+
+      it "re-raises the exception" do
+        expect do
+          subject.start
+        end.to raise_error(SignalException)
+      end
     end
   end
 
