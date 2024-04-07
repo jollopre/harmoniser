@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.1] - 2024-04-08
+
+### Fixed
+- Exit ruby process when harmoniser is not the main process. More details at [issue](https://github.com/jollopre/harmoniser/issues/41).
+
 ## [0.8.0] - 2024-03-31
 
 ### Added

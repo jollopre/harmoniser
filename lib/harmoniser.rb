@@ -7,4 +7,10 @@ require "harmoniser/subscriber"
 module Harmoniser
   extend Configurable
   extend Loggable
+
+  class << self
+    def server?
+      !!defined?(CLI)
+    end
+  end
 end
