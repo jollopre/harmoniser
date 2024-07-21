@@ -21,7 +21,7 @@ module Harmoniser
         const_get(:HARMONISER_PUBLISHER_MUTEX).synchronize do
           harmoniser_exchange.publish(payload, opts)
         end
-        Harmoniser.logger.debug { "Message published: payload = `#{payload}`, opts = `#{opts}`" }
+        Harmoniser.logger.debug { "Message published: exchange = `#{@harmoniser_exchange_definition.name}`, payload = `#{payload}`, opts = `#{opts}`" }
 
         harmoniser_exchange
       end
@@ -44,7 +44,7 @@ module Harmoniser
       end
 
       def raise_missing_exchange_definition
-        raise MissingExchangeDefinition, "Please, call harmoniser_publisher class method first with the exchange_name that will be used for publications"
+        raise MissingExchangeDefinition, "Please call the harmoniser_publisher class method at `#{const_get(:HARMONISER_PUBLISHER_CLASS)}` with the exchange_name that will be used for publishing"
       end
 
       def handle_return(exchange)
@@ -57,6 +57,7 @@ module Harmoniser
     class << self
       def included(base)
         base.const_set(:HARMONISER_PUBLISHER_MUTEX, Mutex.new)
+        base.const_set(:HARMONISER_PUBLISHER_CLASS, base)
         base.extend(ClassMethods)
       end
     end

@@ -87,7 +87,7 @@ RSpec.describe Harmoniser::Publisher do
       it "raises MissingExchangeDefinition" do
         expect do
           klass.publish("foo")
-        end.to raise_error(Harmoniser::Publisher::MissingExchangeDefinition, "Please, call harmoniser_publisher class method first with the exchange_name that will be used for publications")
+        end.to raise_error(Harmoniser::Publisher::MissingExchangeDefinition, "Please call the harmoniser_publisher class method at `#{klass}` with the exchange_name that will be used for publishing")
       end
     end
 

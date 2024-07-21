@@ -37,7 +37,7 @@ RSpec.describe Harmoniser::Subscriber do
       it "raises MissingConsumerDefinition" do
         expect do
           klass.harmoniser_subscriber_start
-        end.to raise_error(Harmoniser::Subscriber::MissingConsumerDefinition, /Please, call harmoniser_subscriber class method first/)
+        end.to raise_error(Harmoniser::Subscriber::MissingConsumerDefinition, /Please call the harmoniser_subscriber class method at `#{klass}` with the queue_name that will be used for subscribing/)
       end
     end
 
@@ -84,21 +84,49 @@ RSpec.describe Harmoniser::Subscriber do
     let(:queue_name) { "queue_harmoniser_publisher_exchange" }
     let!(:exchange) { declare_exchange(exchange_name) }
     let!(:queue) { declare_queue(queue_name, exchange.name) }
+    let(:klass) do
+      Class.new do
+        include Harmoniser::Subscriber
+        harmoniser_subscriber(queue_name: "queue_harmoniser_publisher_exchange")
+      end
+    end
+
+    it "uses default handler which output to stdout" do
+      consumer = klass.harmoniser_subscriber_start
+
+      expect do
+        consumer.call
+      end.to output(/INFO -- .*Default on_delivery handler executed for consumer: consumer_tag = `#{consumer.consumer_tag}`, queue = `#{consumer.queue}`/).to_stdout_from_any_process
+      consumer.cancel
+    end
+
+    context "when verbose mode is set" do
+      before do
+        Harmoniser.configure { |config| config.options_with(verbose: true) }
+      end
+      after do
+        Harmoniser.configure { |config| config.options_with(verbose: false) }
+      end
+
+      it "logs the message received" do
+        consumer = klass.harmoniser_subscriber_start
+
+        expect do
+          consumer.call
+          consumer.cancel
+        end.to output(/DEBUG -- .*Message received by a consumer/).to_stdout_from_any_process
+      end
+    end
 
     context "when klass respond to on_delivery" do
-      let(:klass) do
-        Class.new do
-          include Harmoniser::Subscriber
-          harmoniser_subscriber(queue_name: "queue_harmoniser_publisher_exchange")
+      before do
+        class << klass
+          def consumed?
+            @consumed
+          end
 
-          class << self
-            def consumed?
-              @consumed
-            end
-
-            def on_delivery(delivery_info, properties, payload)
-              @consumed = true
-            end
+          def on_delivery(delivery_info, properties, payload)
+            @consumed = true
           end
         end
       end
@@ -106,7 +134,7 @@ RSpec.describe Harmoniser::Subscriber do
       it "receive messages `on_delivery` method" do
         exchange.publish("foo")
 
-        klass.harmoniser_subscriber_start
+        consumer = klass.harmoniser_subscriber_start
 
         expect do
           require "timeout"
@@ -114,25 +142,7 @@ RSpec.describe Harmoniser::Subscriber do
             until klass.consumed?; end
           end
         end.not_to raise_error
-      end
-    end
-
-    context "when klass does not respond to on_delivery" do
-      let(:klass) do
-        Class.new do
-          include Harmoniser::Subscriber
-          harmoniser_subscriber(queue_name: "queue_harmoniser_publisher_exchange")
-        end
-      end
-
-      it "uses default handler which output to stdout" do
-        exchange.publish("foo")
-
-        consumer = klass.harmoniser_subscriber_start
-
-        expect do
-          consumer.call
-        end.to output(/INFO -- .*Default on_delivery handler executed for consumer: consumer_tag = `#{consumer.consumer_tag}`, queue = `#{consumer.queue}`/).to_stdout_from_any_process
+        consumer.cancel
       end
     end
   end

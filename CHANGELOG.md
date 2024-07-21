@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.9.0] - 2024-08-09
+
+### Added
+- Add debug log when a message is received by a subscriber
+- Add error_class, error_message and error_backtrace for `--require` option from cli
+
+### Changed
+- Amend debug log when a message is published so that exchange name is included
+- Improve error message for MissingExchangeDefinition and
+  MissingConsumerDefinition
+- Define dev dependencies through Gemfile instead of gemspec
+- Changed Topology methods to return self so that Topology definition becomes chainable
+
 ## [0.8.1] - 2024-04-08
 
 ### Fixed

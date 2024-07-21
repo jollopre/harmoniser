@@ -19,6 +19,7 @@ module Harmoniser
         name: name,
         opts: opts
       )
+      self
     end
 
     def add_queue(name, **opts)
@@ -26,6 +27,7 @@ module Harmoniser
         name: name,
         opts: opts
       )
+      self
     end
 
     def add_binding(exchange_name, destination_name, destination_type = :queue, **opts)
@@ -35,6 +37,7 @@ module Harmoniser
         destination_type: destination_type,
         opts: opts
       )
+      self
     end
 
     def declare
