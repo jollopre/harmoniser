@@ -7,19 +7,11 @@ module Harmoniser
 
     DEFAULT_CONNECTION_OPTS = {
       connection_name: "harmoniser@#{VERSION}",
-      connection_timout: 5,
+      connection_timeout: 5,
       host: "127.0.0.1",
       password: "guest",
       port: 5672,
       read_timeout: 5,
-      recovery_attempt_started: proc {
-        stringified_connection = Harmoniser.connection.to_s
-        Harmoniser.logger.info("Recovery attempt started: connection = `#{stringified_connection}`")
-      },
-      recovery_completed: proc {
-        stringified_connection = Harmoniser.connection.to_s
-        Harmoniser.logger.info("Recovery completed: connection = `#{stringified_connection}`")
-      },
       tls_silence_warnings: true,
       username: "guest",
       verify_peer: false,
@@ -37,6 +29,7 @@ module Harmoniser
       "<#{self.class.name}>: #{user}@#{host}:#{port}, connection_name = `#{connection_name}`, vhost = `#{vhost}`"
     end
 
+    # TODO Only perform retries when Harmoniser.server?
     def start
       retries = 0
       begin
@@ -79,6 +72,7 @@ module Harmoniser
       @bunny.vhost
     end
 
+    # TODO Use Signal handler defined at Harmoniser::CLI instead of rescuing SignalException?
     def with_signal_handler
       yield if block_given?
     rescue SignalException => e

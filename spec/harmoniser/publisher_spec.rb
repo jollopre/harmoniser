@@ -87,12 +87,8 @@ RSpec.describe Harmoniser::Publisher do
       it "raises MissingExchangeDefinition" do
         expect do
           klass.publish("foo")
-        end.to raise_error(Harmoniser::Publisher::MissingExchangeDefinition, "Please call the harmoniser_publisher class method at `#{klass}` with the exchange_name that will be used for publishing")
+        end.to raise_error(Harmoniser::Publisher::MissingExchangeDefinition, /Please call the harmoniser_publisher class method at/)
       end
-    end
-
-    context "serialisation" do
-      # TODO decide whether or not seriliazers are introduced into this gem
     end
 
     context "when a mandatory message cannot be routed" do

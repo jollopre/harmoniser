@@ -1,12 +1,11 @@
 require "harmoniser/channelable"
 require "harmoniser/definition"
-require "harmoniser/includable"
+require "harmoniser/subscriber/registry"
 
 module Harmoniser
   module Subscriber
     class MissingConsumerDefinition < StandardError; end
     include Channelable
-    include Includable
 
     module ClassMethods
       def harmoniser_subscriber(queue_name:, consumer_tag: nil, no_ack: true, exclusive: false, arguments: {})
@@ -19,22 +18,34 @@ module Harmoniser
         )
       end
 
-      def harmoniser_subscriber_start
+      def harmoniser_subscriber_start(channel: nil)
         const_get(:HARMONISER_SUBSCRIBER_MUTEX).synchronize do
-          @harmoniser_consumer ||= create_consumer
+          @harmoniser_consumer ||= create_consumer(channel)
         end
+      end
+
+      def harmoniser_subscriber_stop
+        return unless @harmoniser_consumer
+        return unless @harmoniser_consumer.channel.open?
+
+        @harmoniser_consumer.cancel
+      end
+
+      def harmoniser_subscriber_to_s
+        definition = @harmoniser_consumer_definition
+        "<#{name}>: queue_name = `#{definition.queue_name}`, no_ack = `#{definition.no_ack}`"
       end
 
       private
 
-      def create_consumer
+      def create_consumer(channel)
         raise_missing_consumer_definition unless @harmoniser_consumer_definition
 
-        channel = Subscriber.create_channel
+        ch = channel || Subscriber.create_channel
         consumer = Bunny::Consumer.new(
-          channel,
+          ch,
           @harmoniser_consumer_definition.queue_name,
-          @harmoniser_consumer_definition.consumer_tag || channel.generate_consumer_tag,
+          @harmoniser_consumer_definition.consumer_tag || ch.generate_consumer_tag,
           @harmoniser_consumer_definition.no_ack,
           @harmoniser_consumer_definition.exclusive,
           @harmoniser_consumer_definition.arguments
@@ -71,16 +82,20 @@ module Harmoniser
       end
 
       def raise_missing_consumer_definition
-        raise MissingConsumerDefinition, "Please call the harmoniser_subscriber class method at `#{const_get(:HARMONISER_SUBSCRIBER_CLASS)}` with the queue_name that will be used for subscribing"
+        raise MissingConsumerDefinition, "Please call the harmoniser_subscriber class method at `#{name}` with the queue_name that will be used for subscribing"
       end
     end
 
     class << self
       def included(base)
         base.const_set(:HARMONISER_SUBSCRIBER_MUTEX, Mutex.new)
-        base.const_set(:HARMONISER_SUBSCRIBER_CLASS, base)
+        base.private_constant(:HARMONISER_SUBSCRIBER_MUTEX)
+        registry << base
         base.extend(ClassMethods)
-        harmoniser_register_included(base)
+      end
+
+      def registry
+        @registry ||= Registry.new
       end
     end
   end

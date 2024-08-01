@@ -44,7 +44,7 @@ module Harmoniser
       end
 
       def raise_missing_exchange_definition
-        raise MissingExchangeDefinition, "Please call the harmoniser_publisher class method at `#{const_get(:HARMONISER_PUBLISHER_CLASS)}` with the exchange_name that will be used for publishing"
+        raise MissingExchangeDefinition, "Please call the harmoniser_publisher class method at `#{name}` with the exchange_name that will be used for publishing"
       end
 
       def handle_return(exchange)
@@ -57,7 +57,7 @@ module Harmoniser
     class << self
       def included(base)
         base.const_set(:HARMONISER_PUBLISHER_MUTEX, Mutex.new)
-        base.const_set(:HARMONISER_PUBLISHER_CLASS, base)
+        base.private_constant(:HARMONISER_PUBLISHER_MUTEX)
         base.extend(ClassMethods)
       end
     end

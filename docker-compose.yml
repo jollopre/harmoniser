@@ -10,6 +10,8 @@ services:
     command: ["tail", "-f", "/dev/null"]
   rabbitmq:
     image: rabbitmq:3.9.29-management
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     ports:
       - "15672:15672"
   payments:

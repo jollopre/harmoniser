@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.10.0] - 2024-09-16
+
+### Added
+- Add a concurrency option to the CLI. By default, concurrency is unbounded, i.e., each subscriber
+  has its own thread dedicated to processing messages
+- Introduce Harmoniser::Subscriber::Registry for holding references to classes that include
+  Harmoniser::Subscriber
+- Kill the process when an ACK timeout is received through any channel. The process terminates with
+  exit code 138
+- Add a 25-second timeout to shut down the process. This is only applicable to processes using the
+  concurrency option
+
+### Changed
+- Update Bunny to the latest version, i.e., 2.23
+- Cancel subscribers and connection is done within the Launcher context instead of relying on
+  at_exit hook
+- Prevent the connection from being closed after Topology#declare finishes; only the channel used
+  is closed
+
 ## [0.9.0] - 2024-08-09
 
 ### Added

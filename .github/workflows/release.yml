@@ -9,7 +9,7 @@ jobs:
     name: Publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -29,3 +29,16 @@ jobs:
         gem push *.gem
       env:
         GEM_HOST_API_KEY: "${{secrets.RUBYGEMS_AUTH_TOKEN}}"
+
+    - name: Get version from gemspec
+      id: get_version
+      run: echo "VERSION=$(ruby -e 'puts Gem::Specification.load("harmoniser.gemspec").version')" >> $GITHUB_ENV
+
+    - name: Create and Push Git Tag
+      run: |
+        git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
+        git tag v$VERSION
+        git push origin v$VERSION
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

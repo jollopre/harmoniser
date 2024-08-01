@@ -5,11 +5,13 @@ require "harmoniser/launcher"
 
 module Harmoniser
   class CLI
+    class SigUsr1 < StandardError; end
     include Singleton
 
     SIGNAL_HANDLERS = {
       "INT" => lambda { |cli, signal| raise Interrupt },
-      "TERM" => lambda { |cli, signal| raise Interrupt }
+      "TERM" => lambda { |cli, signal| raise Interrupt },
+      "USR1" => lambda { |cli, signal| raise SigUsr1 }
     }
     SIGNAL_HANDLERS.default = lambda { |cli, signal| cli.logger.info("Default signal handler executed since there is no handler defined: signal = `#{signal}`") }
 
@@ -22,6 +24,7 @@ module Harmoniser
 
     def call
       parse_options
+      @launcher = Launcher.call(configuration: @configuration, logger: @logger)
       run
     end
 
@@ -37,7 +40,7 @@ module Harmoniser
     def define_signals
       @read_io, @write_io = IO.pipe
 
-      ["INT", "TERM"].each do |sig|
+      ["INT", "TERM", "USR1"].each do |sig|
         Signal.trap(sig) do
           @write_io.puts(sig)
         end
@@ -45,9 +48,7 @@ module Harmoniser
     end
 
     def run
-      Launcher
-        .new(configuration: configuration, logger: logger)
-        .start
+      @launcher.start
 
       define_signals
 
@@ -58,7 +59,13 @@ module Harmoniser
     rescue Interrupt
       @write_io.close
       @read_io.close
+      @launcher.stop
       exit(0)
+    rescue SigUsr1
+      @write_io.close
+      @read_io.close
+      @launcher.stop
+      exit(128 + 10)
     end
 
     def handle_signal(signal)

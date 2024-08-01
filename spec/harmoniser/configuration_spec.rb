@@ -30,6 +30,14 @@ RSpec.describe Harmoniser::Configuration do
   context "forwardable options" do
     subject { described_class.new }
 
+    describe "#concurrency" do
+      it "returns the number of threads to use per process" do
+        result = subject.concurrency
+
+        expect(result).to eq(Float::INFINITY)
+      end
+    end
+
     describe "#environment" do
       it "returns the environment set" do
         result = subject.environment
@@ -60,6 +68,14 @@ RSpec.describe Harmoniser::Configuration do
       end
     end
 
+    describe "#require" do
+      it "returns the entrypoint file used for boot" do
+        result = subject.require
+
+        expect(result).to eq(".")
+      end
+    end
+
     describe "#verbose" do
       it "returns whether or not verbose is set" do
         result = subject.verbose
@@ -68,11 +84,11 @@ RSpec.describe Harmoniser::Configuration do
       end
     end
 
-    describe "require" do
-      it "returns the entrypoint file used for boot" do
-        result = subject.require
+    describe "#timeout" do
+      it "returns the timeout set" do
+        result = subject.timeout
 
-        expect(result).to eq(".")
+        expect(result).to eq(25)
       end
     end
 

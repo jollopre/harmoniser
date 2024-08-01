@@ -24,5 +24,5 @@ Gem::Specification.new do |spec|
   spec.executables = ["harmoniser"]
   spec.require_paths = ["lib"]
 
-  spec.add_runtime_dependency "bunny", "~> 2.22"
+  spec.add_runtime_dependency "bunny", "~> 2.23"
 end

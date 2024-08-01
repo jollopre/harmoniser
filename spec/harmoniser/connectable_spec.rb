@@ -13,14 +13,19 @@ RSpec.describe Harmoniser::Connectable do
     it "returns default connection opts" do
       expect(subject.connection_opts).to include({
         connection_name: "harmoniser@#{version}",
+        connection_timeout: 5,
         host: "127.0.0.1",
-        logger: be_an_instance_of(Logger),
         password: "guest",
         port: 5672,
+        read_timeout: 5,
         tls_silence_warnings: true,
         username: "guest",
+        verify_peer: false,
         vhost: "/",
-        verify_peer: false
+        write_timeout: 5,
+        logger: be_an_instance_of(Logger),
+        recovery_attempt_started: be_a(Proc),
+        recovery_completed: be_a(Proc)
       })
     end
 

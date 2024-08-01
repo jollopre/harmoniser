@@ -8,6 +8,9 @@ module Harmoniser
       @options = {}
       @option_parser = OptionParser.new do |opts|
         opts.banner = "harmoniser [options]"
+        opts.on "-c", "--concurrency INT", "Set the number of threads to use" do |arg|
+          @options[:concurrency] = Integer(arg)
+        end
         opts.on "-e", "--environment ENV", "Set the application environment (defaults to inferred environment or 'production')" do |arg|
           @options[:environment] = arg
         end
