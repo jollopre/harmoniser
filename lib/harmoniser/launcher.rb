@@ -34,14 +34,14 @@ module Harmoniser
     def load_rails
       filepath = File.expand_path("#{@configuration.require}/config/environment.rb")
       require filepath
-    rescue LoadError
-      @logger.warn("Error while requiring file within directory. No subscribers will run for this process: require = `#{@configuration.require}`, filepath = `#{filepath}`")
+    rescue LoadError => e
+      @logger.warn("Error while requiring file within directory. No subscribers will run for this process: require = `#{@configuration.require}`, filepath = `#{filepath}`, error_class = `#{e.class}`, error_message = `#{e.message}`, error_backtrace = `#{e.backtrace&.first(5)}`")
     end
 
     def load_file
       require @configuration.require
-    rescue LoadError
-      @logger.warn("Error while requiring file. No subscribers will run for this process: require = `#{@configuration.require}`")
+    rescue LoadError => e
+      @logger.warn("Error while requiring file. No subscribers will run for this process: require = `#{@configuration.require}`, error_class = `#{e.class}`, error_message = `#{e.message}`, error_backtrace = `#{e.backtrace&.first(5)}`")
     end
   end
 end

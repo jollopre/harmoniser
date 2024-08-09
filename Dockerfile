@@ -1,4 +1,4 @@
-FROM ruby:3.2.2-alpine3.18 as base
+FROM ruby:3.3.4-alpine3.20 as base
 ENV APP /opt
 WORKDIR $APP
 COPY Gemfile Gemfile.lock harmoniser.gemspec Rakefile $APP/

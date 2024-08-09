@@ -14,7 +14,7 @@ RSpec.describe Harmoniser::Launcher do
 
         context "and `config/environment` file does not exist" do
           it "warn logs about no subscribers will run" do
-            expect(logger).to receive(:warn).with(/Error while requiring file within directory. No subscribers will run for this process:/)
+            expect(logger).to receive(:warn).with(/Error while requiring file within directory. No subscribers will run for this process: require = `.*`, filepath = `.*`, error_class = `.*`, error_message = `.*`, error_backtrace = `.*`/)
 
             subject.start
           end
@@ -28,7 +28,7 @@ RSpec.describe Harmoniser::Launcher do
 
         context "and cannot be loaded" do
           it "warn logs about the problem requiring the file" do
-            expect(logger).to receive(:warn).with(/Error while requiring file. No subscribers will run for this process: require = /)
+            expect(logger).to receive(:warn).with(/Error while requiring file. No subscribers will run for this process: require = `.*`, error_class = `LoadError`, error_message = `.*`, error_backtrace = `.*`/)
 
             subject.start
           end

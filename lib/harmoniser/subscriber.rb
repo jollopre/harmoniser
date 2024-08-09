@@ -57,6 +57,7 @@ module Harmoniser
 
       def handle_delivery(consumer)
         consumer.on_delivery do |delivery_info, properties, payload|
+          Harmoniser.logger.debug { "Message received by a consumer: consumer_tag = `#{consumer.consumer_tag}, `payload = `#{payload}`, queue = `#{consumer.queue}`" }
           if respond_to?(:on_delivery)
             on_delivery(delivery_info, properties, payload)
           else
@@ -70,13 +71,14 @@ module Harmoniser
       end
 
       def raise_missing_consumer_definition
-        raise MissingConsumerDefinition, "Please, call harmoniser_subscriber class method first with the queue_name that will be used for subscribing"
+        raise MissingConsumerDefinition, "Please call the harmoniser_subscriber class method at `#{const_get(:HARMONISER_SUBSCRIBER_CLASS)}` with the queue_name that will be used for subscribing"
       end
     end
 
     class << self
       def included(base)
         base.const_set(:HARMONISER_SUBSCRIBER_MUTEX, Mutex.new)
+        base.const_set(:HARMONISER_SUBSCRIBER_CLASS, base)
         base.extend(ClassMethods)
         harmoniser_register_included(base)
       end
