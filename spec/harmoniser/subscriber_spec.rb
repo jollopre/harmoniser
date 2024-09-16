@@ -37,7 +37,7 @@ RSpec.describe Harmoniser::Subscriber do
       it "raises MissingConsumerDefinition" do
         expect do
           klass.harmoniser_subscriber_start
-        end.to raise_error(Harmoniser::Subscriber::MissingConsumerDefinition, /Please call the harmoniser_subscriber class method at `#{klass}` with the queue_name that will be used for subscribing/)
+        end.to raise_error(Harmoniser::Subscriber::MissingConsumerDefinition, /Please call the harmoniser_subscriber class method at/)
       end
     end
 
@@ -76,6 +76,69 @@ RSpec.describe Harmoniser::Subscriber do
         consumer.cancel
         another_consumer.cancel
       end
+    end
+  end
+
+  describe ".harmoniser_subscriber_stop" do
+    let(:exchange_name) { "harmoniser_publisher_exchange" }
+    let(:queue_name) { "cancel_queue_harmoniser_publisher_exchange" }
+    before(:each) do
+      declare_exchange(exchange_name)
+      declare_queue(queue_name, exchange_name)
+    end
+    let(:klass) do
+      Class.new do
+        include Harmoniser::Subscriber
+        harmoniser_subscriber(queue_name: "cancel_queue_harmoniser_publisher_exchange")
+      end
+    end
+
+    it "cancels a Consumer" do
+      consumer = klass.harmoniser_subscriber_start
+      expect(consumer).to receive(:cancel)
+
+      klass.harmoniser_subscriber_stop
+    end
+
+    context "when the channel behind is closed" do
+      it "does not cancel the consumer" do
+        consumer = klass.harmoniser_subscriber_start
+        consumer.channel.close
+        expect(consumer).not_to receive(:cancel)
+
+        klass.harmoniser_subscriber_stop
+      end
+    end
+  end
+
+  describe ".harmoniser_subscriber_to_s" do
+    let!(:klass) do
+      Class.new do
+        include Harmoniser::Subscriber
+        harmoniser_subscriber queue_name: "a_queue"
+      end
+    end
+
+    it "returns a string representation of the subscriber" do
+      result = klass.harmoniser_subscriber_to_s
+
+      expect(result).to match(/<.*>: queue_name = `a_queue`, no_ack = `true`/)
+    end
+  end
+
+  describe ".registry" do
+    before do
+      described_class.instance_variable_set(:@registry, nil)
+    end
+
+    let!(:klass) do
+      Class.new do
+        include Harmoniser::Subscriber
+      end
+    end
+
+    it "holds all the classes that include Harmoniser::Subscriber" do
+      expect(Harmoniser::Subscriber.registry.to_a).to eq([klass])
     end
   end
 

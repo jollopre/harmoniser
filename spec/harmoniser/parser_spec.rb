@@ -5,6 +5,30 @@ RSpec.describe Harmoniser::Parser do
     let(:logger) { Logger.new($stdout) }
     subject { described_class.new(logger: logger) }
 
+    context "when -c is received" do
+      it "options returns contains `concurrency`" do
+        result = subject.call(["-c", "5"])
+
+        expect(result).to include(concurrency: 5)
+      end
+
+      context "but is an invalid string" do
+        it "raises ArgumentError" do
+          expect do
+            subject.call(["-c", "wadus"])
+          end.to raise_error(ArgumentError)
+        end
+      end
+
+      context "without value" do
+        it "raises invalid argument" do
+          expect do
+            subject.call(["-c", nil])
+          end.to raise_error(OptionParser::InvalidArgument)
+        end
+      end
+    end
+
     context "when -e is received" do
       it "options returned contains `environment` to `production`" do
         result = subject.call(["-e", "production"])

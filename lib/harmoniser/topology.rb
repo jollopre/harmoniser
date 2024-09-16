@@ -41,11 +41,12 @@ module Harmoniser
     end
 
     def declare
-      channel = self.class.create_channel
-      declare_exchanges(channel)
-      declare_queues(channel)
-      declare_bindings(channel)
-      Harmoniser.connection.close
+      self.class.create_channel.tap do |ch|
+        declare_exchanges(ch)
+        declare_queues(ch)
+        declare_bindings(ch)
+        ch.close
+      end
     end
 
     private

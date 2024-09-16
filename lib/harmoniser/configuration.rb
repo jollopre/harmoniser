@@ -9,7 +9,7 @@ module Harmoniser
     include Connectable
 
     attr_reader :logger, :options
-    def_delegators :options, :environment, :require, :verbose
+    def_delegators :options, :concurrency, :environment, :require, :verbose, :timeout
 
     def initialize
       @logger = Harmoniser.logger
@@ -33,8 +33,10 @@ module Harmoniser
 
     def default_options
       {
+        concurrency: Float::INFINITY,
         environment: ENV.fetch("RAILS_ENV", ENV.fetch("RACK_ENV", "production")),
         require: ".",
+        timeout: 25,
         verbose: false
       }
     end
