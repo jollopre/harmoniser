@@ -39,18 +39,6 @@ RSpec.describe Harmoniser::Configurable do
         end.to raise_error(NoMethodError, /Please, configure first/)
       end
     end
-
-    context "delegators" do
-      before { subject.configure {} }
-
-      it "responds to connection" do
-        expect(subject).to respond_to(:connection)
-      end
-
-      it "responds to connection?" do
-        expect(subject).to respond_to(:connection?)
-      end
-    end
   end
 
   describe ".default_configuration" do

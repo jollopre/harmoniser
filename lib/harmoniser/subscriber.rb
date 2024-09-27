@@ -1,11 +1,11 @@
-require "harmoniser/channelable"
+require "harmoniser/connectable"
 require "harmoniser/definition"
 require "harmoniser/subscriber/registry"
 
 module Harmoniser
   module Subscriber
     class MissingConsumerDefinition < StandardError; end
-    include Channelable
+    include Connectable
 
     module ClassMethods
       def harmoniser_subscriber(queue_name:, consumer_tag: nil, no_ack: true, exclusive: false, arguments: {})

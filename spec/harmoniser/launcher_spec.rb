@@ -113,7 +113,7 @@ RSpec.describe Harmoniser::Launcher do
     end
 
     describe "#stop" do
-      it "cancels subscribers, informs about work pool and closes connection" do
+      it "cancels subscribers, informs about work pool" do
         configuration.options_with(require: filepath, concurrency: Float::INFINITY)
         subject.start
 
@@ -121,9 +121,15 @@ RSpec.describe Harmoniser::Launcher do
         expect(logger).to receive(:info).with(/Subscribers will be cancelled from queues: klasses = /)
         expect(logger).to receive(:info).with(/Subscribers cancelled: klasses = /)
         expect(logger).to receive(:info).with(/Stats about the work pool: work_pool_reporter = .*\. Note: A backlog greater than zero means messages could be lost for subscribers configured with no_ack, i.e. automatic ack/)
-        expect(logger).to receive(:info).with(/Connection will be closed: connection =/)
-        expect(logger).to receive(:info).with(/Connection closed: connection =/)
         expect(logger).to receive(:info).with("Bye!")
+
+        subject.stop
+      end
+
+      it "closes connections" do
+        configuration.options_with(require: filepath, concurrency: Float::INFINITY)
+        subject.start
+        expect(Harmoniser::Subscriber.connection).to receive(:close)
 
         subject.stop
       end
@@ -151,26 +157,33 @@ RSpec.describe Harmoniser::Launcher do
 
       it "the shared channel has work pool shutdown timeout to 25 seconds" do
         configuration.options_with(require: filepath, concurrency: concurrency)
-        allow(Harmoniser::Launcher::Bounded).to receive(:create_channel).and_call_original
+        allow(Harmoniser::Subscriber).to receive(:create_channel).and_call_original
 
         subject.start
 
-        expect(Harmoniser::Launcher::Bounded).to have_received(:create_channel).with(consumer_pool_size: concurrency, consumer_pool_shutdown_timeout: 25)
+        expect(Harmoniser::Subscriber).to have_received(:create_channel).with(consumer_pool_size: concurrency, consumer_pool_shutdown_timeout: 25)
       end
     end
 
     describe "#stop" do
-      it "cancels subscribers, informs about work pool and closes connection" do
+      it "cancels subscribers, informs about work pool" do
         configuration.options_with(require: filepath, concurrency: concurrency)
+
         subject.start
 
         expect(logger).to receive(:info).with("Shutting down!")
         expect(logger).to receive(:info).with(/Subscribers will be cancelled from queues: klasses = /)
         expect(logger).to receive(:info).with(/Subscribers cancelled: klasses = /)
         expect(logger).to receive(:info).with(/Stats about the work pool: work_pool_reporter = .*\. Note: A backlog greater than zero means messages could be lost for subscribers configured with no_ack, i.e. automatic ack/)
-        expect(logger).to receive(:info).with(/Connection will be closed: connection =/)
-        expect(logger).to receive(:info).with(/Connection closed: connection =/)
         expect(logger).to receive(:info).with("Bye!")
+
+        subject.stop
+      end
+
+      it "closes connections" do
+        configuration.options_with(require: filepath, concurrency: concurrency)
+        subject.start
+        expect(Harmoniser::Subscriber.connection).to receive(:close)
 
         subject.stop
       end

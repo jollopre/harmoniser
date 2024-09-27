@@ -1,10 +1,10 @@
-require "harmoniser/channelable"
+require "harmoniser/connectable"
 require "harmoniser/definition"
 
 module Harmoniser
   module Publisher
     class MissingExchangeDefinition < StandardError; end
-    include Channelable
+    include Connectable
 
     module ClassMethods
       def harmoniser_publisher(exchange_name:)
@@ -60,6 +60,12 @@ module Harmoniser
         base.private_constant(:HARMONISER_PUBLISHER_MUTEX)
         base.extend(ClassMethods)
       end
+    end
+
+    at_exit do
+      next if Harmoniser.server?
+      next unless Publisher.connection?
+      Publisher.connection.close
     end
   end
 end

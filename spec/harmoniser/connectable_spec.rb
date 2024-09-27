@@ -1,4 +1,5 @@
 require "harmoniser/connectable"
+require "shared_context/configurable"
 
 RSpec.describe Harmoniser::Connectable do
   let(:klass) do
@@ -6,109 +7,18 @@ RSpec.describe Harmoniser::Connectable do
       include Harmoniser::Connectable
     end
   end
-  let(:version) { Harmoniser::VERSION }
-  subject { klass.new }
 
-  describe "#connection_opts" do
-    it "returns default connection opts" do
-      expect(subject.connection_opts).to include({
-        connection_name: "harmoniser@#{version}",
-        connection_timeout: 5,
-        host: "127.0.0.1",
-        password: "guest",
-        port: 5672,
-        read_timeout: 5,
-        tls_silence_warnings: true,
-        username: "guest",
-        verify_peer: false,
-        vhost: "/",
-        write_timeout: 5,
-        logger: be_an_instance_of(Logger),
-        recovery_attempt_started: be_a(Proc),
-        recovery_completed: be_a(Proc)
-      })
-    end
+  include_context "configurable"
 
-    context "when new connection_opts are passed" do
-      it "returns connection opts with overwritten opts" do
-        subject.connection_opts = {connection_name: "wadus"}
-
-        expect(subject.connection_opts).to include({
-          connection_name: "wadus",
-          host: "127.0.0.1",
-          logger: be_an_instance_of(Logger),
-          password: "guest",
-          port: 5672,
-          tls_silence_warnings: true,
-          username: "guest",
-          vhost: "/",
-          verify_peer: false
-        })
-      end
-    end
-  end
-
-  describe "#connection_opts=" do
-    context "when called with empty opts" do
-      it "uses default connection opts defined" do
-        subject.connection_opts = {}
-
-        expect(subject.connection_opts).to include({
-          connection_name: "harmoniser@#{version}",
-          host: "127.0.0.1",
-          logger: be_an_instance_of(Logger),
-          password: "guest",
-          port: 5672,
-          tls_silence_warnings: true,
-          username: "guest",
-          vhost: "/",
-          verify_peer: false
-        })
-      end
-    end
-
-    context "when any argument matching properties of the default connection opts defined is passed" do
-      it "override the properties" do
-        subject.connection_opts = {host: "wadus", password: "secret_password"}
-
-        expect(subject.connection_opts).to include({
-          connection_name: "harmoniser@#{version}",
-          host: "wadus",
-          logger: Harmoniser.logger,
-          password: "secret_password",
-          port: 5672,
-          tls_silence_warnings: true,
-          username: "guest",
-          vhost: "/",
-          verify_peer: false
-        })
-      end
-    end
-
-    context "when called with a non Hash object" do
-      it "raises TypeError" do
-        expect do
-          subject.connection_opts = "wadus"
-        end.to raise_error(TypeError, "opts must be a Hash object")
-      end
-    end
-  end
-
-  describe "#connection" do
-    let(:host) { ENV.fetch("RABBITMQ_HOST") }
-
-    before do
-      subject.connection_opts = {host: host}
-    end
-
+  describe ".connection" do
     it "creates a connection to RabbitMQ using Connection underneath" do
       expect_any_instance_of(Harmoniser::Connection).to receive(:start)
 
-      subject.connection
+      klass.connection
     end
 
     it "connection creation is thread-safe" do
-      connection_creation = lambda { subject.connection }
+      connection_creation = lambda { klass.connection }
 
       result1 = Thread.new(&connection_creation)
       result2 = Thread.new(&connection_creation)
@@ -117,36 +27,119 @@ RSpec.describe Harmoniser::Connectable do
     end
 
     it "a closed connection can be re-opened" do
-      bunny_instance = subject.connection.instance_variable_get(:@bunny)
-      subject.connection.close
+      bunny_instance = klass.connection.instance_variable_get(:@bunny)
+      klass.connection.close
 
       expect(bunny_instance.open?).to eq(false)
-      expect(subject.connection.open?).to eq(true)
+      expect(klass.connection.open?).to eq(true)
     end
 
     it "a closed connection due to a network failure CANNOT be re-opened" do
-      bunny_instance = subject.connection.instance_variable_get(:@bunny)
-      subject.connection.close
+      bunny_instance = klass.connection.instance_variable_get(:@bunny)
+      klass.connection.close
       bunny_instance.instance_variable_set(:@recovering_from_network_failure, true)
 
-      expect(subject.connection.open?).to eq(false)
+      expect(klass.connection.open?).to eq(false)
     end
   end
 
   describe ".connection?" do
-    let(:host) { ENV.fetch("RABBITMQ_HOST") }
-    before { subject.connection_opts = {host: host} }
-
     context "when connection is invoked" do
       it "returns true" do
-        subject.connection
+        klass.connection
 
-        expect(subject.connection?).to eq(true)
+        expect(klass.connection?).to eq(true)
       end
     end
 
     it "returns false" do
-      expect(subject.connection?).to eq(false)
+      expect(klass.connection?).to eq(false)
+    end
+  end
+
+  describe ".create_channel" do
+    it "creates a Bunny::Channel with the consumer_pool_size specified" do
+      result = klass.create_channel(consumer_pool_size: 10)
+
+      expect(result.work_pool.size).to eq(10)
+    end
+
+    context "when no consumer_pool_size is passed" do
+      it "creates a Bunny::Channel with consumer_pool_size to 1" do
+        result = klass.create_channel
+
+        expect(result.work_pool.size).to eq(1)
+      end
+    end
+
+    context "when an error occurs at channel level" do
+      subject(:channel) { klass.create_channel }
+
+      it "log with error severity is output" do
+        method = AMQ::Protocol::Channel::Close.new(406, "unknown delivery tag", nil, nil)
+        on_error = channel.instance_variable_get(:@on_error)
+
+        expect do
+          on_error.call(subject, method)
+        end.to output(/ERROR -- .*Default on_error handler executed for channel: amq_method = `.*`, exchanges = `\[\]`, queues = `\[\]`, reply_code = `406`, reply_text = `unknown delivery tag`/).to_stdout_from_any_process
+      end
+
+      context "for any other amq_method is received" do
+        it "log with error severity is output but does not include `reply_code` nor `reply_text`" do
+          method = AMQ::Protocol::Channel::CloseOk.new
+          on_error = channel.instance_variable_get(:@on_error)
+
+          expect do
+            on_error.call(subject, method)
+          end.to output(/ERROR -- .*Default on_error handler executed for channel: amq_method = `.*`, exchanges = `\[\]`, queues = `\[\]`/).to_stdout_from_any_process
+        end
+      end
+
+      context "when ack timeout is received" do
+        let(:method) do
+          AMQ::Protocol::Channel::Close.new(406, "delivery acknowledgement on channel 1 timed out", nil, nil)
+        end
+
+        before do
+          allow(Harmoniser).to receive(:server?).and_return(true)
+          allow(Process).to receive(:kill).with("USR1", anything)
+        end
+
+        it "terminates the process with USR1 signal" do
+          on_error = channel.instance_variable_get(:@on_error)
+
+          on_error.call(subject, method)
+
+          expect(Process).to have_received(:kill).with("USR1", anything)
+        end
+
+        context "but harmoniser is NOT the running process" do
+          before do
+            allow(Harmoniser).to receive(:server?).and_return(false)
+          end
+
+          it "does not terminate the process" do
+            on_error = channel.instance_variable_get(:@on_error)
+
+            on_error.call(subject, method)
+
+            expect(Process).not_to have_received(:kill).with(anything, anything)
+          end
+        end
+      end
+    end
+
+    context "when an error occurs consuming a message" do
+      subject(:channel) { klass.create_channel }
+
+      it "log with error severity is output" do
+        on_uncaught_exception = channel.instance_variable_get(:@uncaught_exception_handler)
+        consumer = Bunny::Consumer.new(channel, "a_queue")
+
+        expect do
+          on_uncaught_exception.call(StandardError.new("wadus"), consumer)
+        end.to output(/ERROR -- .*Default on_uncaught_exception handler executed for channel/).to_stdout_from_any_process
+      end
     end
   end
 end

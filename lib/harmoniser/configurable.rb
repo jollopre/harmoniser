@@ -1,10 +1,7 @@
-require "forwardable"
 require "harmoniser/configuration"
 
 module Harmoniser
   module Configurable
-    extend Forwardable
-
     def configure
       @configuration ||= Configuration.new
       yield(@configuration)
@@ -19,7 +16,5 @@ module Harmoniser
     def default_configuration
       @configuration ||= Configuration.new
     end
-
-    def_delegators :configuration, :connection, :connection?
   end
 end

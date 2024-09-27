@@ -21,12 +21,15 @@ module Harmoniser
 
     def_delegators :@bunny, :create_channel, :open?, :recovering_from_network_failure?
 
-    def initialize(opts)
-      @bunny = Bunny.new(opts)
+    def initialize(opts, logger: Harmoniser.logger)
+      @logger = logger
+      @bunny = Bunny.new(maybe_dynamic_opts(opts)).tap do |bunny|
+        attach_callbacks(bunny)
+      end
     end
 
     def to_s
-      "<#{self.class.name}>: #{user}@#{host}:#{port}, connection_name = `#{connection_name}`, vhost = `#{vhost}`"
+      "<#{self.class.name}>:#{object_id} #{user}@#{host}:#{port}, connection_name = `#{connection_name}`, vhost = `#{vhost}`"
     end
 
     # TODO Only perform retries when Harmoniser.server?
@@ -35,7 +38,7 @@ module Harmoniser
       begin
         with_signal_handler { @bunny.start }
       rescue => e
-        Harmoniser.logger.error("Connection attempt failed: retries = `#{retries}`, error_class = `#{e.class}`, error_message = `#{e.message}`")
+        @logger.error("Connection attempt failed: retries = `#{retries}`, error_class = `#{e.class}`, error_message = `#{e.message}`")
         with_signal_handler { sleep(1) }
         retries += 1
         retry
@@ -43,14 +46,25 @@ module Harmoniser
     end
 
     def close
-      @bunny.close
-      true
+      @logger.info("Connection will be closed: connection = `#{self}`")
+      @bunny.close.tap do
+        @logger.info("Connection closed: connection = `#{self}`")
+      end
     rescue => e
-      Harmoniser.logger.error("Connection#close failed: error_class = `#{e.class}`, error_message = `#{e.message}`")
+      @logger.error("Connection#close failed: error_class = `#{e.class}`, error_message = `#{e.message}`")
       false
     end
 
     private
+
+    def attach_callbacks(bunny)
+      bunny.on_blocked do |blocked|
+        @logger.warn("Connection blocked: connection = `#{self}`, reason = `#{blocked.reason}`")
+      end
+      bunny.on_unblocked do |unblocked|
+        @logger.info("Connection unblocked: connection = `#{self}`")
+      end
+    end
 
     def connection_name
       @bunny.connection_name
@@ -58,6 +72,18 @@ module Harmoniser
 
     def host
       @bunny.transport.host
+    end
+
+    def maybe_dynamic_opts(opts)
+      opts.merge({
+        logger: opts.fetch(:logger) { @logger },
+        recovery_attempt_started: opts.fetch(:recovery_attempt_started) do
+          proc { @logger.info("Recovery attempt started: connection = `#{self}`") }
+        end,
+        recovery_completed: opts.fetch(:recovery_completed) do
+          proc { @logger.info("Recovery completed: connection = `#{self}`") }
+        end
+      })
     end
 
     def port
@@ -76,7 +102,7 @@ module Harmoniser
     def with_signal_handler
       yield if block_given?
     rescue SignalException => e
-      Harmoniser.logger.info("Signal received: signal = `#{Signal.signame(e.signo)}`")
+      @logger.info("Signal received: signal = `#{Signal.signame(e.signo)}`")
       Harmoniser.server? ? exit(0) : raise
     end
   end

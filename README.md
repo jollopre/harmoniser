@@ -111,12 +111,6 @@ To contribute to this codebase, you will need to setup your local development us
 
 You can also access the running container by executing `$ make shell` and then execute any commands related to Harmoniser within its isolated environment.
 
-## Future Improvements
-
-- [ ] Feature: Introduce capability of configuring concurrency for Harmoniser process.
-- [ ] Issue: Reopen Channels anytime an exception occurs that closes them automatically. More info can be found [here](https://www.rabbitmq.com/channels.html#error-handling).
-- [ ] Chore: Introduce simplecov gem for code coverage.
-
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).

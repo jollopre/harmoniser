@@ -15,18 +15,6 @@ RSpec.describe Harmoniser do
     end
   end
 
-  describe ".connection" do
-    it "responds_to connection" do
-      expect(described_class).to respond_to(:connection)
-    end
-  end
-
-  describe ".connection?" do
-    it "responds_to connection?" do
-      expect(described_class).to respond_to(:connection?)
-    end
-  end
-
   describe ".default_configuration" do
     it "respond_to default_configuration" do
       expect(described_class).to respond_to(:default_configuration)
