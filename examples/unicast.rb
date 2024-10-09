@@ -9,9 +9,9 @@ Harmoniser.configure do |config|
   }
   # Define topology for unicast messaging
   config.define_topology do |topology|
-    topology.add_exchange(:direct, "my_direct_exchange", auto_delete: true)
-    topology.add_queue("my_first_queue", auto_delete: true)
-    topology.add_queue("my_second_queue", auto_delete: true)
+    topology.add_exchange(:direct, "my_direct_exchange", durable: true)
+    topology.add_queue("my_first_queue", durable: true)
+    topology.add_queue("my_second_queue", durable: true)
     topology.add_binding("my_direct_exchange", "my_first_queue", routing_key: "foo")
     topology.add_binding("my_direct_exchange", "my_second_queue", routing_key: "bar")
     topology.declare

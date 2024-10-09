@@ -32,7 +32,7 @@ RSpec.describe Harmoniser::WorkPoolReporter do
     end
 
     context "when channel is re-used across subscribers" do
-      let(:channel) { Harmoniser.connection.create_channel }
+      let(:channel) { bunny.create_channel }
       subject { described_class.new(consumers: subscribers.map { |s| s.harmoniser_subscriber_start(channel: channel) }) }
       it "outputs stats about the work pool for each consumer" do
         result = subject.to_s

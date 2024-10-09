@@ -49,16 +49,21 @@ module Harmoniser
       end
 
       def maybe_close
-        return unless @configuration.connection?
-        return unless @configuration.connection.open?
+        maybe_close_subscriber
+        maybe_close_publisher
+      end
+
+      def maybe_close_publisher
+        return unless Publisher.connection?
+        Publisher.connection.close
+      end
+
+      def maybe_close_subscriber
+        return unless Subscriber.connection?
 
         maybe_cancel_subscribers
         report_work_pool
-
-        connection = @configuration.connection
-        @logger.info("Connection will be closed: connection = `#{connection}`")
-        connection.close
-        @logger.info("Connection closed: connection = `#{connection}`")
+        Subscriber.connection.close
       end
 
       def maybe_cancel_subscribers

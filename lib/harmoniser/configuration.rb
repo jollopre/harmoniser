@@ -1,12 +1,11 @@
 require "forwardable"
-require "harmoniser/connectable"
+require "harmoniser/connection"
 require "harmoniser/topology"
 require "harmoniser/options"
 
 module Harmoniser
   class Configuration
     extend Forwardable
-    include Connectable
 
     attr_reader :logger, :options
     def_delegators :options, :concurrency, :environment, :require, :verbose, :timeout
@@ -16,6 +15,16 @@ module Harmoniser
       @options = Options.new(**default_options)
       set_logger_severity
       @topology = Topology.new
+    end
+
+    def connection_opts
+      @connection_opts ||= Connection::DEFAULT_CONNECTION_OPTS
+    end
+
+    def connection_opts=(opts)
+      raise TypeError, "opts must be a Hash object" unless opts.is_a?(Hash)
+
+      @connection_opts = connection_opts.merge(opts)
     end
 
     def define_topology

@@ -1,6 +1,78 @@
 require "harmoniser/configuration"
 
 RSpec.describe Harmoniser::Configuration do
+  subject { described_class.new }
+
+  describe "#connection_opts" do
+    let(:version) { Harmoniser::VERSION }
+
+    it "returns default connection opts" do
+      expect(subject.connection_opts).to include({
+        connection_name: "harmoniser@#{version}",
+        connection_timeout: 5,
+        host: "127.0.0.1",
+        password: "guest",
+        port: 5672,
+        read_timeout: 5,
+        tls_silence_warnings: true,
+        username: "guest",
+        verify_peer: false,
+        vhost: "/",
+        write_timeout: 5
+      })
+    end
+
+    context "when new connection_opts are passed" do
+      let!(:default_connection_opts) { subject.connection_opts }
+
+      it "returns connection opts with overwritten opts" do
+        subject.connection_opts = {connection_name: "wadus"}
+
+        updated_connection_opts = subject.connection_opts
+        result = updated_connection_opts.reject { |k, v| default_connection_opts[k] == v }
+        expect(result).to eq(
+          connection_name: "wadus"
+        )
+      end
+    end
+  end
+
+  describe "#connection_opts=" do
+    context "when called with empty opts" do
+      let!(:default_connection_opts) { subject.connection_opts }
+
+      it "uses default connection opts defined" do
+        subject.connection_opts = {}
+
+        updated_connection_opts = subject.connection_opts
+        expect(default_connection_opts).to eq(updated_connection_opts)
+      end
+    end
+
+    context "when any argument matching properties of the default connection opts defined is passed" do
+      let!(:default_connection_opts) { subject.connection_opts }
+
+      it "override the properties" do
+        subject.connection_opts = {host: "wadus", password: "secret_password"}
+
+        updated_connection_opts = subject.connection_opts
+        result = updated_connection_opts.reject { |k, v| default_connection_opts[k] == v }
+        expect(result).to eq({
+          host: "wadus",
+          password: "secret_password"
+        })
+      end
+    end
+
+    context "when called with a non Hash object" do
+      it "raises TypeError" do
+        expect do
+          subject.connection_opts = "wadus"
+        end.to raise_error(TypeError, "opts must be a Hash object")
+      end
+    end
+  end
+
   describe "#define_topology" do
     it "yield a topology object" do
       expect do |b|
@@ -28,8 +100,6 @@ RSpec.describe Harmoniser::Configuration do
   end
 
   context "forwardable options" do
-    subject { described_class.new }
-
     describe "#concurrency" do
       it "returns the number of threads to use per process" do
         result = subject.concurrency
@@ -101,14 +171,6 @@ RSpec.describe Harmoniser::Configuration do
 
       it "responds to connection_opts=" do
         expect(subject).to respond_to(:connection_opts=)
-      end
-
-      it "responds to connection" do
-        expect(subject).to respond_to(:connection)
-      end
-
-      it "responds to connection?" do
-        expect(subject).to respond_to(:connection?)
       end
     end
   end

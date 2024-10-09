@@ -1,9 +1,9 @@
-require "harmoniser/channelable"
+require "harmoniser/connectable"
 require "harmoniser/definition"
 
 module Harmoniser
   class Topology
-    include Channelable
+    include Connectable
 
     attr_reader :bindings, :exchanges, :queues
 
@@ -45,7 +45,7 @@ module Harmoniser
         declare_exchanges(ch)
         declare_queues(ch)
         declare_bindings(ch)
-        ch.close
+        ch.connection.close
       end
     end
 

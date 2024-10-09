@@ -261,4 +261,18 @@ RSpec.describe Harmoniser::Subscriber do
       end
     end
   end
+
+  context "connectable" do
+    it "responds to .connection" do
+      expect(described_class).to respond_to(:connection)
+    end
+
+    it "responds to .connection" do
+      expect(described_class).to respond_to(:connection?)
+    end
+
+    it "responds to .connection" do
+      expect(described_class).to respond_to(:create_channel)
+    end
+  end
 end

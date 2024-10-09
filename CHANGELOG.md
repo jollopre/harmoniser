@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.11.0] - 2024-10-09
+
+### Added
+- Attach callbacks for block/unblock at Connection
+- Introduce Connectable to accommodate Session/Channel management
+- Attach at_exit hook for maybe closing Publisher connection. Only applicable for cases in which harmoniser is not the process running.
+
+### Changed
+- Separate connection for Publisher, Subscriber and Topology as per recommendations from [RabbitMQ official docs](https://www.rabbitmq.com/docs/alarms#effects-on-clusters)
+
 ## [0.10.0] - 2024-09-16
 
 ### Added
