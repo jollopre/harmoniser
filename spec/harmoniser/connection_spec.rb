@@ -114,48 +114,34 @@ RSpec.describe Harmoniser::Connection do
   end
 
   describe "#start" do
-    before do
-      allow(subject).to receive(:exit)
-    end
-
     let(:bunny) { subject.instance_variable_get(:@bunny) }
 
-    it "retries establishing connection until succeeding" do
-      allow(logger).to receive(:error)
-      allow(subject).to receive(:sleep)
-      allow(bunny).to receive(:start) do
-        @retries ||= 0
-        if @retries < 2
-          @retries += 1
-          raise "Error"
+    context "when `server?`" do
+      before do
+        allow(Harmoniser).to receive(:server?).and_return(true)
+        allow(logger).to receive(:error)
+        allow(subject).to receive(:sleep)
+        allow(bunny).to receive(:start) do
+          @retries ||= 0
+          if @retries < 2
+            @retries += 1
+            raise "Error"
+          end
         end
       end
 
-      subject.start
+      it "retries establishing connection until succeeding" do
+        subject.start
 
-      expect(logger).to have_received(:error).with(/Connection attempt failed: retries = `.*`, error_class = `RuntimeError`, error_message = `Error`/).twice
+        expect(logger).to have_received(:error).with(/Connection attempt failed: retries = `.*`, error_class = `RuntimeError`, error_message = `Error`/).twice
+      end
     end
 
-    context "when a OS signal is received while connecting" do
-      before do
-        allow(bunny).to receive(:start).and_raise(SignalException.new("SIGINT"))
-      end
-
-      context "and harmoniser is the main process" do
-        before { allow(Harmoniser).to receive(:server?).and_return(true) }
-
-        it "invokes exit with zero" do
-          subject.start
-
-          expect(subject).to have_received(:exit).with(0)
-        end
-      end
-
-      it "re-raises the exception" do
-        expect do
-          subject.start
-        end.to raise_error(SignalException)
-      end
+    it "does not perform retries and propagates the error" do
+      allow(bunny).to receive(:start).and_raise("Error")
+      expect do
+        subject.start
+      end.to raise_error("Error")
     end
   end
 
