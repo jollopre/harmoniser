@@ -36,10 +36,10 @@ module Harmoniser
     def start
       retries = 0
       begin
-        with_signal_handler { @bunny.start }
+        @bunny.start
       rescue => e
         @logger.error("Connection attempt failed: retries = `#{retries}`, error_class = `#{e.class}`, error_message = `#{e.message}`")
-        with_signal_handler { sleep(1) }
+        sleep(1)
         retries += 1
         retry
       end
@@ -96,14 +96,6 @@ module Harmoniser
 
     def vhost
       @bunny.vhost
-    end
-
-    # TODO Use Signal handler defined at Harmoniser::CLI instead of rescuing SignalException?
-    def with_signal_handler
-      yield if block_given?
-    rescue SignalException => e
-      @logger.info("Signal received: signal = `#{Signal.signame(e.signo)}`")
-      Harmoniser.server? ? exit(0) : raise
     end
   end
 end
