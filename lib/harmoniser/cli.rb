@@ -20,6 +20,7 @@ module Harmoniser
     def initialize
       @configuration = Harmoniser.default_configuration
       @logger = Harmoniser.logger
+      @queue = Thread::Queue.new
     end
 
     def call
@@ -38,39 +39,43 @@ module Harmoniser
     end
 
     def define_signals
-      @read_io, @write_io = IO.pipe
-
       ["INT", "TERM", "USR1"].each do |sig|
         Signal.trap(sig) do
-          @write_io.puts(sig)
+          @queue.push(sig)
         end
       end
     end
 
     def run
-      @launcher.start
-
       define_signals
-
-      while @read_io.wait_readable
-        signal = @read_io.gets.strip
-        handle_signal(signal)
-      end
+      start_launcher
+      await_signal
     rescue Interrupt
-      @write_io.close
-      @read_io.close
-      @launcher.stop
+      stop_launcher
       exit(0)
     rescue SigUsr1
-      @write_io.close
-      @read_io.close
-      @launcher.stop
+      stop_launcher
       exit(128 + 10)
     end
 
-    def handle_signal(signal)
+    def await_signal
+      signal = @queue.pop
       logger.info("Signal received: signal = `#{signal}`")
       SIGNAL_HANDLERS[signal].call(self, signal)
+    end
+
+    def start_launcher
+      Thread.new do
+        await_signal
+      end.tap do |t|
+        t.abort_on_exception = true
+        t.report_on_exception = false
+        @launcher.start
+      end.kill
+    end
+
+    def stop_launcher
+      @launcher.stop
     end
   end
 end

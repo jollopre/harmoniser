@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.12.0] - 2024-12-22
+
+### Changed
+- Perform retries connecting to RabbitMQ only if Harmoniser runs as the main process
+- Change from IO.pipe to Thread::Queue so that an OS signal is exchanged through a queue safely.
+
 ## [0.11.0] - 2024-10-09
 
 ### Added
