@@ -2,6 +2,7 @@ require "singleton"
 require "harmoniser"
 require "harmoniser/parser"
 require "harmoniser/launcher"
+require "harmoniser/health"
 
 module Harmoniser
   class CLI
@@ -49,6 +50,7 @@ module Harmoniser
     def run
       define_signals
       start_launcher
+      Health::Server.new.call
       await_signal
     rescue Interrupt
       stop_launcher
