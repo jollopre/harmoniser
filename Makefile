@@ -4,6 +4,8 @@ build:
 	docker compose build --no-cache
 clean:
 	docker compose down --rmi all --volumes
+docs-server:
+	docker compose exec gem bundle exec yard server --reload --port 8808
 down:
 	docker compose down --remove-orphans
 install:

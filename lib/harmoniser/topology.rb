@@ -13,6 +13,17 @@ module Harmoniser
       @queues = Set.new
     end
 
+    # Add an exchange to the topology. This method does not create the exchange in RabbitMQ, it only
+    # defines the exchange name, its type (e.g. :direct, :fanout, :topic) and options that will be
+    # used for creating the exchange in RabbitMQ. In order to create the exchange in RabbitMQ, you
+    # need to call the declare method. See {#declare} for more information.
+    # @param type [Symbol] The type of the exchange (e.g. :direct, :fanout, :topic).
+    # @param name [String] The name of the exchange.
+    # @param opts [Hash] The options for the exchange. Some of these options are explained below for quick referencee. See AMQP options[https://github.com/rabbitmq/amqp-0.9.1-spec/blob/main/docs/amqp-0-9-1-reference.md#parameters-16] for more information.
+    #  * :durable [Boolean] - If true, the exchange will survive a broker restart.
+    #  * :auto_delete [Boolean] - If true, the exchange will be deleted when no queues are
+    #  * :arguments [Hash] - Additional arguments for the exchange.
+    # @return [Topology] The topology instance.
     def add_exchange(type, name, **opts)
       @exchanges << Definition::Exchange.new(
         type: type,

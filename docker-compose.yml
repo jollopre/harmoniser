@@ -7,6 +7,8 @@ services:
       - ./:/opt
     environment:
       - RABBITMQ_HOST=rabbitmq
+    ports:
+      - "8808:8808"
     command: ["tail", "-f", "/dev/null"]
   rabbitmq:
     image: rabbitmq:3.9.29-management

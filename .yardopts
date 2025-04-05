@@ -1,0 +1,5 @@
+--plugin yard-markdown
+--output-dir docs/_yardoc
+--readme README.md
+docs/**/*.md
+lib/**/*.rb

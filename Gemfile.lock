@@ -12,6 +12,7 @@ GEM
     bunny (2.23.0)
       amq-protocol (~> 2.3, >= 2.3.1)
       sorted_set (~> 1, >= 1.0.2)
+    csv (3.3.3)
     diff-lcs (1.5.1)
     json (2.7.2)
     language_server-protocol (3.17.0.3)
@@ -77,6 +78,11 @@ GEM
       standard
     strscan (3.1.0)
     unicode-display_width (2.5.0)
+    webrick (1.9.1)
+    yard (0.9.37)
+    yard-markdown (0.5.0)
+      csv
+      yard
 
 PLATFORMS
   aarch64-linux-musl
@@ -86,6 +92,9 @@ DEPENDENCIES
   rake (~> 13)
   rspec (~> 3)
   standardrb (~> 1)
+  webrick (~> 1.9, >= 1.9.1)
+  yard (~> 0)
+  yard-markdown (~> 0)
 
 BUNDLED WITH
    2.4.10
