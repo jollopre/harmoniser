@@ -1,5 +1,6 @@
 require "forwardable"
 require "bunny"
+require "harmoniser/error_handler"
 
 module Harmoniser
   class Connection
@@ -21,7 +22,8 @@ module Harmoniser
 
     def_delegators :@bunny, :create_channel, :open?, :recovering_from_network_failure?
 
-    def initialize(opts, logger: Harmoniser.logger)
+    def initialize(opts, error_handler: ErrorHandler.default, logger: Harmoniser.logger)
+      @error_handler = error_handler
       @logger = logger
       @bunny = Bunny.new(maybe_dynamic_opts(opts)).tap do |bunny|
         attach_callbacks(bunny)
@@ -43,7 +45,7 @@ module Harmoniser
       begin
         @bunny.start
       rescue => e
-        @logger.error("Connection attempt failed: retries = `#{retries}`, error_class = `#{e.class}`, error_message = `#{e.message}`")
+        handle_error(e, {description: "Connection attempt failed", retries: retries})
         sleep(1)
         retries += 1
         retry
@@ -56,7 +58,7 @@ module Harmoniser
         @logger.info("Connection closed: connection = `#{self}`")
       end
     rescue => e
-      @logger.error("Connection#close failed: error_class = `#{e.class}`, error_message = `#{e.message}`")
+      handle_error(e, {description: "Connection close failed"})
       false
     end
 
@@ -101,6 +103,10 @@ module Harmoniser
 
     def vhost
       @bunny.vhost
+    end
+
+    def handle_error(exception, ctx)
+      @error_handler.handle_error(exception, ctx)
     end
   end
 end

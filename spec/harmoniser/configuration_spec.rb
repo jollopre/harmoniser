@@ -173,6 +173,18 @@ RSpec.describe Harmoniser::Configuration do
         expect(subject).to respond_to(:connection_opts=)
       end
     end
+
+    context "error_handler" do
+      subject { described_class.new }
+
+      it "responds to handle_error" do
+        expect(subject).to respond_to(:handle_error)
+      end
+
+      it "responds to on_error" do
+        expect(subject).to respond_to(:on_error)
+      end
+    end
   end
 
   describe "#logger" do

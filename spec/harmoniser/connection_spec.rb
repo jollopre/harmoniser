@@ -104,11 +104,10 @@ RSpec.describe Harmoniser::Connection do
 
       it "log with error severity is output" do
         allow(bunny).to receive(:close).and_raise("Error")
-        allow(logger).to receive(:error)
 
-        subject.close
-
-        expect(logger).to have_received(:error).with(/Connection#close failed: error_class = `RuntimeError`, error_message = `Error`/)
+        expect do
+          subject.close
+        end.to output(/.*ERROR -- .*Connection close failed"/).to_stdout_from_any_process
       end
     end
   end
@@ -119,7 +118,6 @@ RSpec.describe Harmoniser::Connection do
     context "when `server?`" do
       before do
         allow(Harmoniser).to receive(:server?).and_return(true)
-        allow(logger).to receive(:error)
         allow(subject).to receive(:sleep)
         allow(bunny).to receive(:start) do
           @retries ||= 0
@@ -131,9 +129,9 @@ RSpec.describe Harmoniser::Connection do
       end
 
       it "retries establishing connection until succeeding" do
-        subject.start
-
-        expect(logger).to have_received(:error).with(/Connection attempt failed: retries = `.*`, error_class = `RuntimeError`, error_message = `Error`/).twice
+        expect do
+          subject.start
+        end.to output(/.*ERROR -- .*"Connection attempt failed".*ERROR -- .*"Connection attempt failed"/m).to_stdout_from_any_process
       end
     end
 

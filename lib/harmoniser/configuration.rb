@@ -1,5 +1,6 @@
 require "forwardable"
 require "harmoniser/connection"
+require "harmoniser/error_handler"
 require "harmoniser/topology"
 require "harmoniser/options"
 
@@ -7,14 +8,16 @@ module Harmoniser
   class Configuration
     extend Forwardable
 
-    attr_reader :logger, :options
+    attr_reader :error_handler, :logger, :options
     def_delegators :options, :concurrency, :environment, :require, :verbose, :timeout
+    def_delegators :error_handler, :handle_error, :on_error
 
     def initialize
       @logger = Harmoniser.logger
-      @options = Options.new(**default_options)
+      @options = Options.new
       set_logger_severity
       @topology = Topology.new
+      @error_handler = ErrorHandler.default
     end
 
     def connection_opts
@@ -39,16 +42,6 @@ module Harmoniser
     end
 
     private
-
-    def default_options
-      {
-        concurrency: Float::INFINITY,
-        environment: ENV.fetch("RAILS_ENV", ENV.fetch("RACK_ENV", "production")),
-        require: ".",
-        timeout: 25,
-        verbose: false
-      }
-    end
 
     def set_logger_severity
       @logger.level = @options.verbose? ? Logger::DEBUG : Logger::INFO
