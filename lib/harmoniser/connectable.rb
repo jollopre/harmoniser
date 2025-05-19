@@ -7,7 +7,7 @@ module Harmoniser
     module ClassMethods
       def connection(configuration = Harmoniser.configuration)
         MUTEX.synchronize do
-          @connection ||= Connection.new(configuration.connection_opts)
+          @connection ||= Connection.new(configuration.connection_opts, error_handler: configuration.error_handler)
           @connection.start unless @connection.open? || @connection.recovering_from_network_failure?
           @connection
         end
@@ -21,6 +21,7 @@ module Harmoniser
         connection
           .create_channel(nil, consumer_pool_size, false, consumer_pool_shutdown_timeout)
           .tap do |channel|
+            channel.cancel_consumers_before_closing!
             attach_callbacks(channel)
           end
       end
@@ -45,12 +46,12 @@ module Harmoniser
         end
 
         stringified_attributes = attributes.map { |k, v| "#{k} = `#{v}`" }.join(", ")
-        Harmoniser.logger.error("Default on_error handler executed for channel: #{stringified_attributes}")
+        Harmoniser.logger.warn("Default on_error handler executed for channel: #{stringified_attributes}")
         maybe_kill_process(amq_method)
       end
 
       def on_uncaught_exception(error, consumer)
-        Harmoniser.logger.error("Default on_uncaught_exception handler executed for channel: error_class = `#{error.class}`, error_message = `#{error.message}`, error_backtrace = `#{error.backtrace&.first(5)}, queue = `#{consumer.queue}`")
+        handle_error(error, {description: "Uncaught exception from consumer", arguments: consumer.arguments, channel_id: consumer.channel.id, consumer_tag: consumer.consumer_tag, exclusive: consumer.exclusive, no_ack: consumer.no_ack, queue: consumer.queue})
       end
 
       def maybe_kill_process(amq_method)
@@ -61,6 +62,10 @@ module Harmoniser
         return false unless amq_method.is_a?(AMQ::Protocol::Channel::Close)
 
         amq_method.reply_text =~ /delivery acknowledgement on channel \d+ timed out/
+      end
+
+      def handle_error(exception, ctx)
+        Harmoniser.configuration.handle_error(exception, ctx)
       end
     end
 

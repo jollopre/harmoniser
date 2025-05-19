@@ -18,7 +18,7 @@ RSpec.describe Harmoniser::Connectable do
     end
 
     it "connection creation is thread-safe" do
-      connection_creation = lambda { klass.connection }
+      connection_creation = -> { klass.connection }
 
       result1 = Thread.new(&connection_creation)
       result2 = Thread.new(&connection_creation)
@@ -81,7 +81,7 @@ RSpec.describe Harmoniser::Connectable do
 
         expect do
           on_error.call(subject, method)
-        end.to output(/ERROR -- .*Default on_error handler executed for channel: amq_method = `.*`, exchanges = `\[\]`, queues = `\[\]`, reply_code = `406`, reply_text = `unknown delivery tag`/).to_stdout_from_any_process
+        end.to output(/WARN -- .*Default on_error handler executed for channel: amq_method = `.*`, exchanges = `\[\]`, queues = `\[\]`, reply_code = `406`, reply_text = `unknown delivery tag`/).to_stdout_from_any_process
       end
 
       context "for any other amq_method is received" do
@@ -91,7 +91,7 @@ RSpec.describe Harmoniser::Connectable do
 
           expect do
             on_error.call(subject, method)
-          end.to output(/ERROR -- .*Default on_error handler executed for channel: amq_method = `.*`, exchanges = `\[\]`, queues = `\[\]`/).to_stdout_from_any_process
+          end.to output(/WARN -- .*Default on_error handler executed for channel: amq_method = `.*`, exchanges = `\[\]`, queues = `\[\]`/).to_stdout_from_any_process
         end
       end
 
@@ -138,7 +138,7 @@ RSpec.describe Harmoniser::Connectable do
 
         expect do
           on_uncaught_exception.call(StandardError.new("wadus"), consumer)
-        end.to output(/ERROR -- .*Default on_uncaught_exception handler executed for channel/).to_stdout_from_any_process
+        end.to output(/ERROR -- .*Error handler called: exception = `wadus \(StandardError\)`/).to_stdout_from_any_process
       end
     end
   end

@@ -61,15 +61,13 @@ module Harmoniser
       def maybe_close_subscriber
         return unless Subscriber.connection?
 
-        maybe_cancel_subscribers
+        report_subscribers_to_cancel
         report_work_pool
         Subscriber.connection.close
       end
 
-      def maybe_cancel_subscribers
+      def report_subscribers_to_cancel
         @logger.info("Subscribers will be cancelled from queues: klasses = `#{@subscribers}`")
-        @subscribers.each(&:harmoniser_subscriber_stop)
-        @logger.info("Subscribers cancelled: klasses = `#{@subscribers}`")
       end
 
       def report_work_pool

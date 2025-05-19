@@ -113,13 +113,12 @@ RSpec.describe Harmoniser::Launcher do
     end
 
     describe "#stop" do
-      it "cancels subscribers, informs about work pool" do
+      it "reports subscribers to be cancelled and informs about work pool" do
         configuration.options_with(require: filepath, concurrency: Float::INFINITY)
         subject.start
 
         expect(logger).to receive(:info).with("Shutting down!")
         expect(logger).to receive(:info).with(/Subscribers will be cancelled from queues: klasses = /)
-        expect(logger).to receive(:info).with(/Subscribers cancelled: klasses = /)
         expect(logger).to receive(:info).with(/Stats about the work pool: work_pool_reporter = .*\. Note: A backlog greater than zero means messages could be lost for subscribers configured with no_ack, i.e. automatic ack/)
         expect(logger).to receive(:info).with("Bye!")
 
@@ -166,14 +165,13 @@ RSpec.describe Harmoniser::Launcher do
     end
 
     describe "#stop" do
-      it "cancels subscribers, informs about work pool" do
+      it "reports subscribers to be cancelled and informs about work pool" do
         configuration.options_with(require: filepath, concurrency: concurrency)
 
         subject.start
 
         expect(logger).to receive(:info).with("Shutting down!")
         expect(logger).to receive(:info).with(/Subscribers will be cancelled from queues: klasses = /)
-        expect(logger).to receive(:info).with(/Subscribers cancelled: klasses = /)
         expect(logger).to receive(:info).with(/Stats about the work pool: work_pool_reporter = .*\. Note: A backlog greater than zero means messages could be lost for subscribers configured with no_ack, i.e. automatic ack/)
         expect(logger).to receive(:info).with("Bye!")
 

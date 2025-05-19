@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.13.0] - 2025-05-19
+
+### Added
+- Introduce Harmoniser.configuration#on_error callback to handle errors that occur while running the application, (e.g. when a subscriber raises an error, or when a connection cannot be established to RabbitMQ). This method permits appending as many handlers as needed. Usage:
+
+```ruby
+Harmoniser.configuration do |config|
+  config.on_error do |error, ctx|
+    # error is the exception, i.e. StandardError class raised by the application whereas ctx is the context of the error passed as Hash. The ctx hash contains at least the key `description` which is a string describing the error.
+
+    puts "An error occurred: exception = `#{error.detailed_message}`; description = `#{ctx[:description]}`"
+  end
+end
+```
+
+### Changed
+- Update Bunny to the latest version, i.e., 2.24
+- Delegate into Bunny::Channel to cancel consumers and close channel through
+Channel#cancel_consumers_before_closing!
+- Change severity level from error to warning for errors occurring at channel level
+
+
 ## [0.12.0] - 2024-12-22
 
 ### Changed
