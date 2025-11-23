@@ -59,21 +59,21 @@ RSpec.describe Harmoniser::Connectable do
 
   describe ".create_channel" do
     it "creates a Bunny::Channel with the consumer_pool_size specified" do
-      result = klass.create_channel(consumer_pool_size: 10)
+      result = klass.create_channel(consumer_pool_size: 10).bunny_channel
 
       expect(result.work_pool.size).to eq(10)
     end
 
     context "when no consumer_pool_size is passed" do
       it "creates a Bunny::Channel with consumer_pool_size to 1" do
-        result = klass.create_channel
+        result = klass.create_channel.bunny_channel
 
         expect(result.work_pool.size).to eq(1)
       end
     end
 
     context "when an error occurs at channel level" do
-      subject(:channel) { klass.create_channel }
+      subject(:channel) { klass.create_channel.bunny_channel }
 
       it "log with error severity is output" do
         method = AMQ::Protocol::Channel::Close.new(406, "unknown delivery tag", nil, nil)
@@ -130,7 +130,7 @@ RSpec.describe Harmoniser::Connectable do
     end
 
     context "when an error occurs consuming a message" do
-      subject(:channel) { klass.create_channel }
+      subject(:channel) { klass.create_channel.bunny_channel }
 
       it "log with error severity is output" do
         on_uncaught_exception = channel.instance_variable_get(:@uncaught_exception_handler)

@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.14.0] - 2025-11-25
+
+### Added
+- Introduce Mock functionality for testing without RabbitMQ dependency. Usage:
+
+```ruby
+require "harmoniser/mock"
+Harmoniser::Mock.mock!
+
+# Your Publisher/Subscriber code works the same but without RabbitMQ
+class TestPublisher
+  include Harmoniser::Publisher
+  harmoniser_publisher exchange_name: "my_exchange"
+end
+
+exchange = TestPublisher.publish("message", routing_key: "test")
+published_messages = exchange.published_messages # Access captured messages
+```
+
+- Add examples for mock publishing and topology under `examples/` folder
+- Create Channel wrapper (`Harmoniser::Channel`) to isolate RabbitMQ dependencies
+
+### Changed
+- Remove explicit dependencies to Bunny classes except for Consumer, enabling better RabbitMQ isolation through a single, well-defined interface
+- Use Channel wrapper everywhere except for subscriptions (which still require actual Channel instance for Bunny::Consumer)
+
+
 ## [0.13.0] - 2025-05-19
 
 ### Added
