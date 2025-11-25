@@ -33,12 +33,12 @@ module Harmoniser
       end
 
       def create_exchange
-        exchange = Bunny::Exchange.new(
-          Publisher.create_channel,
-          @harmoniser_exchange_definition.type,
-          @harmoniser_exchange_definition.name,
-          @harmoniser_exchange_definition.opts
-        )
+        exchange = Publisher
+          .create_channel
+          .exchange(
+            @harmoniser_exchange_definition.name,
+            {type: @harmoniser_exchange_definition.type}.merge(@harmoniser_exchange_definition.opts)
+          )
         handle_return(exchange)
         exchange
       end

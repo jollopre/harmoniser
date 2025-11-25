@@ -41,7 +41,7 @@ module Harmoniser
       def create_consumer(channel)
         raise_missing_consumer_definition unless @harmoniser_consumer_definition
 
-        ch = channel || Subscriber.create_channel
+        ch = channel || Subscriber.create_channel.bunny_channel
         consumer = Bunny::Consumer.new(
           ch,
           @harmoniser_consumer_definition.queue_name,

@@ -219,6 +219,16 @@ RSpec.describe Harmoniser::Topology do
         )
       end
     end
+
+    it "returns self" do
+      subject.add_exchange(:fanout, "test_exchange")
+      subject.add_queue("test_queue")
+      subject.add_binding("test_exchange", "test_queue")
+
+      result = subject.declare
+
+      expect(result).to be(subject)
+    end
   end
 
   context "connectable" do

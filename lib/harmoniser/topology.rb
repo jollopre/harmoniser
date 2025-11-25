@@ -5,7 +5,7 @@ module Harmoniser
   class Topology
     include Connectable
 
-    attr_reader :bindings, :exchanges, :queues
+    attr_reader :bindings, :exchanges, :queues, :declared_channel
 
     def initialize
       @bindings = Set.new
@@ -41,25 +41,26 @@ module Harmoniser
     end
 
     def declare
-      self.class.create_channel.tap do |ch|
+      @declared_channel = self.class.create_channel.tap do |ch|
         declare_exchanges(ch)
         declare_queues(ch)
         declare_bindings(ch)
-        ch.connection.close
       end
+      self.class.connection.close
+      self
     end
 
     private
 
     def declare_exchanges(channel)
       exchanges.each do |exchange|
-        Bunny::Exchange.new(channel, exchange.type, exchange.name, exchange.opts)
+        channel.exchange(exchange.name, {type: exchange.type}.merge(exchange.opts))
       end
     end
 
     def declare_queues(channel)
       queues.each do |queue|
-        Bunny::Queue.new(channel, queue.name, queue.opts)
+        channel.queue(queue.name, queue.opts)
       end
     end
 

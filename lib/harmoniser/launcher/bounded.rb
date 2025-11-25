@@ -12,7 +12,7 @@ module Harmoniser
       end
 
       def channel
-        @channel ||= Subscriber.create_channel(consumer_pool_size: @configuration.concurrency, consumer_pool_shutdown_timeout: @configuration.timeout)
+        @channel ||= Subscriber.create_channel(consumer_pool_size: @configuration.concurrency, consumer_pool_shutdown_timeout: @configuration.timeout).bunny_channel
       end
     end
   end
