@@ -72,6 +72,12 @@ RSpec.describe Harmoniser::Connectable do
       end
     end
 
+    it "registers the created channel on the connection" do
+      channel = klass.create_channel
+
+      expect(klass.connection.instance_variable_get(:@channels)).to include(channel)
+    end
+
     context "when an error occurs at channel level" do
       subject(:channel) { klass.create_channel.bunny_channel }
 

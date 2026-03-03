@@ -75,6 +75,22 @@ RSpec.describe Harmoniser::Connection do
     end
   end
 
+  describe "#register_channel" do
+    include_context "configurable"
+
+    subject { described_class.new({connection_name: "wadus", host: host}, logger: logger).tap(&:start) }
+
+    after { subject.close }
+
+    it "registers the channel so it is tracked by the connection" do
+      channel = Harmoniser::Channel.new(subject.create_channel)
+
+      subject.register_channel(channel)
+
+      expect(subject.instance_variable_get(:@channels)).to include(channel)
+    end
+  end
+
   describe "#close" do
     let(:bunny) { subject.instance_variable_get(:@bunny) }
 
@@ -91,6 +107,34 @@ RSpec.describe Harmoniser::Connection do
       expect(logger).to receive(:info).with(/Connection closed: connection =/)
 
       subject.close
+    end
+
+    context "when a channel is registered" do
+      include_context "configurable"
+
+      subject { described_class.new({connection_name: "wadus", host: host}, logger: logger).tap(&:start) }
+
+      let(:channel) do
+        Harmoniser::Channel.new(subject.create_channel).tap do |ch|
+          subject.register_channel(ch)
+        end
+      end
+
+      it "closes the channel before closing the connection" do
+        channel
+
+        subject.close
+
+        expect(channel.open?).to eq(false)
+      end
+
+      context "when the channel is already closed" do
+        it "does not raise" do
+          channel.bunny_channel.close
+
+          expect { subject.close }.not_to raise_error
+        end
+      end
     end
 
     context "when closing connection fails" do
