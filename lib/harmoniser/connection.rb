@@ -25,9 +25,14 @@ module Harmoniser
     def initialize(opts, error_handler: ErrorHandler.default, logger: Harmoniser.logger)
       @error_handler = error_handler
       @logger = logger
+      @channels = []
       @bunny = Bunny.new(maybe_dynamic_opts(opts)).tap do |bunny|
         attach_callbacks(bunny)
       end
+    end
+
+    def register_channel(channel)
+      @channels << channel
     end
 
     def to_s
@@ -54,6 +59,7 @@ module Harmoniser
 
     def close
       @logger.info("Connection will be closed: connection = `#{self}`")
+      close_channels
       @bunny.close.tap do
         @logger.info("Connection closed: connection = `#{self}`")
       end
@@ -63,6 +69,10 @@ module Harmoniser
     end
 
     private
+
+    def close_channels
+      @channels.each { |channel| channel.close if channel.open? }
+    end
 
     def attach_callbacks(bunny)
       bunny.on_blocked do |blocked|

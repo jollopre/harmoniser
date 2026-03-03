@@ -6,14 +6,23 @@ module Harmoniser
 
     def_delegators :@bunny_channel,
       :exchange,
+      :open?,
       :queue,
       :queue_bind
 
     attr_reader :bunny_channel
 
-    def initialize(bunny_channel)
+    def initialize(bunny_channel, logger: Harmoniser.logger)
       @bunny_channel = bunny_channel
+      @logger = logger
       after_initialize
+    end
+
+    def close
+      @bunny_channel.close
+    rescue => e
+      @logger.warn("Failed to close channel: exception = `#{e.detailed_message}`")
+      false
     end
 
     private
@@ -41,7 +50,7 @@ module Harmoniser
       end
 
       stringified_attributes = attributes.map { |k, v| "#{k} = `#{v}`" }.join(", ")
-      Harmoniser.logger.warn("Default on_error handler executed for channel: #{stringified_attributes}")
+      @logger.warn("Default on_error handler executed for channel: #{stringified_attributes}")
       maybe_kill_process(amq_method)
     end
 

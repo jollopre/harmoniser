@@ -22,6 +22,7 @@ module Harmoniser
         connection
           .create_channel(nil, consumer_pool_size, false, consumer_pool_shutdown_timeout)
           .yield_self { |bunny_channel| Channel.new(bunny_channel) }
+          .tap { |channel| connection.register_channel(channel) }
       end
     end
 

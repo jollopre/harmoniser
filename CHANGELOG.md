@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0] - 2026-03-03
+
+### Changed
+- Close all channels tracked by `Harmoniser::Connection` before closing the connection. This ensures consumers are cancelled and channels are closed while the connection is still open, preventing `Bunny::ConnectionClosedError` that could occur when a consumer acknowledges a message concurrently during shutdown
+- Introduce `Harmoniser::Channel#close` and `Harmoniser::Channel#open?` to expose channel lifecycle as part of the public interface
+- Inject logger into `Harmoniser::Channel` for consistent logger usage across the codebase
+
 ## [0.14.0] - 2025-11-25
 
 ### Added
