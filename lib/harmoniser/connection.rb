@@ -26,6 +26,7 @@ module Harmoniser
       @error_handler = error_handler
       @logger = logger
       @channels = []
+      @ready = true
       @bunny = Bunny.new(maybe_dynamic_opts(opts)).tap do |bunny|
         attach_callbacks(bunny)
       end
@@ -33,6 +34,10 @@ module Harmoniser
 
     def register_channel(channel)
       @channels << channel
+    end
+
+    def ready?
+      @bunny.open? && @ready
     end
 
     def to_s
@@ -92,15 +97,35 @@ module Harmoniser
     end
 
     def maybe_dynamic_opts(opts)
+      app_recovery_attempt_started = opts[:recovery_attempt_started]
+      app_recovery_completed = opts[:recovery_completed]
+
       opts.merge({
         logger: opts.fetch(:logger) { @logger },
-        recovery_attempt_started: opts.fetch(:recovery_attempt_started) do
-          proc { @logger.info("Recovery attempt started: connection = `#{self}`") }
+        recovery_attempt_started: proc do
+          on_recovery_attempt_started
+          app_recovery_attempt_started&.call
         end,
-        recovery_completed: opts.fetch(:recovery_completed) do
-          proc { @logger.info("Recovery completed: connection = `#{self}`") }
+        recovery_completed: proc do
+          on_recovery_completed
+          app_recovery_completed&.call
         end
       })
+    end
+
+    def on_recovery_attempt_started
+      @ready = false
+      wait_for_channels_release
+      @logger.info("Recovery attempt started: connection = `#{self}`")
+    end
+
+    def on_recovery_completed
+      @ready = true
+      @logger.info("Recovery completed: connection = `#{self}`")
+    end
+
+    def wait_for_channels_release
+      @channels.each { |channel| channel.synchronize {} }
     end
 
     def port

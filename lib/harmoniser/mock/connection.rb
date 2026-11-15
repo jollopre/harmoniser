@@ -20,6 +20,10 @@ module Harmoniser
         @open
       end
 
+      def ready?
+        open?
+      end
+
       def recovering_from_network_failure?
         false
       end

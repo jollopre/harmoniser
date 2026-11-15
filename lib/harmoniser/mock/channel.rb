@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "monitor"
+
 module Harmoniser
   module Mock
     class Channel
@@ -47,6 +49,11 @@ module Harmoniser
         @exchanges = {}
         @queues = {}
         @bindings = []
+        @monitor = Monitor.new
+      end
+
+      def synchronize(&)
+        @monitor.synchronize(&)
       end
 
       def exchange(name, opts = {})

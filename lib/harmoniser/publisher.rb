@@ -4,6 +4,9 @@ require "harmoniser/definition"
 module Harmoniser
   module Publisher
     class MissingExchangeDefinition < StandardError; end
+
+    class ConnectionNotReady < StandardError; end
+
     include Connectable
 
     module ClassMethods
@@ -18,23 +21,34 @@ module Harmoniser
       def publish(payload, opts = {})
         raise_missing_exchange_definition unless @harmoniser_exchange_definition
 
-        const_get(:HARMONISER_PUBLISHER_MUTEX).synchronize do
-          harmoniser_exchange.publish(payload, opts)
+        connection, channel, exchange = harmoniser_publisher_resources
+        channel.synchronize do
+          raise_connection_not_ready unless connection.ready?
+          exchange.publish(payload, opts)
         end
         Harmoniser.logger.debug { "Message published: exchange = `#{@harmoniser_exchange_definition.name}`, payload = `#{payload}`, opts = `#{opts}`" }
 
-        harmoniser_exchange
+        exchange
       end
 
       private
 
-      def harmoniser_exchange
-        @harmoniser_exchange ||= create_exchange
+      def harmoniser_publisher_resources
+        const_get(:HARMONISER_PUBLISHER_MUTEX).synchronize do
+          unless @harmoniser_exchange
+            connection = Publisher.connection
+            raise_connection_not_ready unless connection.ready?
+            channel = Publisher.create_channel
+            @harmoniser_exchange = create_exchange(channel)
+            @harmoniser_channel = channel
+            @harmoniser_connection = connection
+          end
+          [@harmoniser_connection, @harmoniser_channel, @harmoniser_exchange]
+        end
       end
 
-      def create_exchange
-        exchange = Publisher
-          .create_channel
+      def create_exchange(channel)
+        exchange = channel
           .exchange(
             @harmoniser_exchange_definition.name,
             {type: @harmoniser_exchange_definition.type}.merge(@harmoniser_exchange_definition.opts)
@@ -45,6 +59,10 @@ module Harmoniser
 
       def raise_missing_exchange_definition
         raise MissingExchangeDefinition, "Please call the harmoniser_publisher class method at `#{name}` with the exchange_name that will be used for publishing"
+      end
+
+      def raise_connection_not_ready
+        raise ConnectionNotReady, "Connection is not ready for publishing to exchange `#{@harmoniser_exchange_definition.name}`, it is either closed or recovering from a network failure"
       end
 
       def handle_return(exchange)

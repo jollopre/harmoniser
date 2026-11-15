@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.15.1] - 2026-11-15
+
+### Fixed
+- Publishing on a connection that is not open or is recovering from a network failure now raises
+  `Harmoniser::Publisher::ConnectionNotReady` before any frame is sent. Previously a publish could
+  reach a channel that the broker had not reopened yet, causing `CHANNEL_ERROR` and concurrent
+  Bunny recovery loops that never completed
+- Recovery callbacks given in `connection_opts` (`recovery_attempt_started`, `recovery_completed`)
+  no longer replace Harmoniser's own callbacks; both are called
+
+### Notes
+- `Bunny::ConnectionClosedError` can still be raised when the connection drops between Harmoniser's
+  check and the write. Callers that handle publish failures should rescue both
+  `Harmoniser::Publisher::ConnectionNotReady` and `Bunny::ConnectionClosedError`
+
 ## [0.15.0] - 2026-03-03
 
 ### Changed

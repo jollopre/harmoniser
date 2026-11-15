@@ -91,6 +91,25 @@ RSpec.describe Harmoniser::Mock::Connection do
     end
   end
 
+  describe "#ready?" do
+    it "returns false initially" do
+      expect(connection.ready?).to be(false)
+    end
+
+    it "returns true after start is called" do
+      connection.start
+
+      expect(connection.ready?).to be(true)
+    end
+
+    it "returns false after close is called" do
+      connection.start
+      connection.close
+
+      expect(connection.ready?).to be(false)
+    end
+  end
+
   describe "#recovering_from_network_failure?" do
     it "returns false" do
       expect(connection.recovering_from_network_failure?).to be(false)

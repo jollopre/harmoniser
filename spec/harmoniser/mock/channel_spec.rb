@@ -157,6 +157,16 @@ RSpec.describe Harmoniser::Mock::Channel do
     end
   end
 
+  describe "#synchronize" do
+    it "returns the value of the block" do
+      expect(channel.synchronize { :result }).to eq(:result)
+    end
+
+    it "allows the thread holding the lock to enter it again" do
+      expect(channel.synchronize { channel.synchronize { :reentered } }).to eq(:reentered)
+    end
+  end
+
   describe "#bunny_channel" do
     it "raises RuntimeError when accessed" do
       expect { channel.bunny_channel }.to raise_error(

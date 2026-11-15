@@ -53,6 +53,42 @@ RSpec.describe Harmoniser::Channel do
     end
   end
 
+  describe "#synchronize" do
+    it "returns the value of the block" do
+      expect(subject.synchronize { :result }).to eq(:result)
+    end
+
+    it "serialises blocks across threads" do
+      locked = Queue.new
+      release = Queue.new
+      events = Queue.new
+      holder = Thread.new do
+        subject.synchronize do
+          locked << true
+          release.pop
+          events << :holder_finished
+        end
+      end
+      locked.pop
+      waiter = Thread.new { subject.synchronize { events << :waiter_finished } }
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+      Thread.pass until waiter.status != "run" || Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+
+      expect(events.size).to eq(0)
+
+      release << true
+      [holder, waiter].each { |thread| thread.join(5) }
+
+      expect(Array.new(events.size) { events.pop }).to eq([:holder_finished, :waiter_finished])
+    end
+  end
+
+  describe "#synchronize re-entry" do
+    it "allows the thread holding the lock to enter it again" do
+      expect(subject.synchronize { subject.synchronize { :reentered } }).to eq(:reentered)
+    end
+  end
+
   describe "on_error_callback" do
     context "when a custom logger is injected" do
       let(:custom_logger) { Logger.new(IO::NULL) }

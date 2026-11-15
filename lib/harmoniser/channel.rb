@@ -1,4 +1,5 @@
 require "forwardable"
+require "monitor"
 
 module Harmoniser
   class Channel
@@ -15,7 +16,12 @@ module Harmoniser
     def initialize(bunny_channel, logger: Harmoniser.logger)
       @bunny_channel = bunny_channel
       @logger = logger
+      @monitor = Monitor.new
       after_initialize
+    end
+
+    def synchronize(&)
+      @monitor.synchronize(&)
     end
 
     def close

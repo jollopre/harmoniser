@@ -35,20 +35,135 @@ RSpec.describe Harmoniser::Connection do
     end
 
     context "when dynamic opts are already present" do
-      it "does not override them" do
-        allow(Bunny).to receive(:new).and_call_original
-
+      let(:calls) { [] }
+      let(:app_recovery_attempt_started) { proc { calls << [:app_started, connection.instance_variable_get(:@ready)] } }
+      let(:app_recovery_completed) { proc { calls << [:app_completed, connection.instance_variable_get(:@ready)] } }
+      let(:connection) do
         described_class.new({
           logger: "foo",
-          recovery_attempt_started: "bar",
-          recovery_completed: "baz"
-        })
+          recovery_attempt_started: app_recovery_attempt_started,
+          recovery_completed: app_recovery_completed
+        }, logger: Logger.new(IO::NULL))
+      end
+      let(:bunny) { connection.instance_variable_get(:@bunny) }
+
+      it "forwards the logger as is" do
+        allow(Bunny).to receive(:new).and_call_original
+
+        connection
+
+        expect(Bunny).to have_received(:new).with(include(logger: "foo"))
+      end
+
+      it "forwards Harmoniser's recovery callbacks instead of the app's ones" do
+        allow(Bunny).to receive(:new).and_call_original
+
+        connection
 
         expect(Bunny).to have_received(:new).with(include(
-          logger: "foo",
-          recovery_attempt_started: "bar",
-          recovery_completed: "baz"
+          recovery_attempt_started: be_a(Proc).and(satisfy { |callback| !callback.equal?(app_recovery_attempt_started) }),
+          recovery_completed: be_a(Proc).and(satisfy { |callback| !callback.equal?(app_recovery_completed) })
         ))
+      end
+
+      it "calls the app's recovery callbacks after Harmoniser's ones" do
+        bunny.instance_variable_get(:@recovery_attempt_started).call
+        bunny.instance_variable_get(:@recovery_completed).call
+
+        expect(calls).to eq([[:app_started, false], [:app_completed, true]])
+      end
+    end
+  end
+
+  describe "#ready?" do
+    let(:bunny) { subject.instance_variable_get(:@bunny) }
+
+    it "returns false when the connection is not open" do
+      allow(bunny).to receive(:open?).and_return(false)
+
+      expect(subject.ready?).to eq(false)
+    end
+
+    it "returns true when the connection is open and no recovery is in progress" do
+      allow(bunny).to receive(:open?).and_return(true)
+
+      expect(subject.ready?).to eq(true)
+    end
+  end
+
+  describe "recovery callbacks" do
+    let(:logger) { Logger.new(IO::NULL) }
+    let(:bunny) { subject.instance_variable_get(:@bunny) }
+    let(:recovery_attempt_started) { bunny.instance_variable_get(:@recovery_attempt_started) }
+    let(:recovery_completed) { bunny.instance_variable_get(:@recovery_completed) }
+    let(:bunny_channel) { double("Bunny::Channel", cancel_consumers_before_closing!: nil, on_error: nil, on_uncaught_exception: nil) }
+    let(:channel) { Harmoniser::Channel.new(bunny_channel, logger: logger).tap { |ch| subject.register_channel(ch) } }
+
+    before { allow(bunny).to receive(:open?).and_return(true) }
+
+    it "flips ready? to false when a recovery attempt starts" do
+      expect { recovery_attempt_started.call }.to change { subject.ready? }.from(true).to(false)
+    end
+
+    it "flips ready? to true when the recovery is completed" do
+      recovery_attempt_started.call
+
+      expect { recovery_completed.call }.to change { subject.ready? }.from(false).to(true)
+    end
+
+    it "logs the recovery attempt and its completion" do
+      expect(logger).to receive(:info).with(/Recovery attempt started: connection = `.*`/)
+      expect(logger).to receive(:info).with(/Recovery completed: connection = `.*`/)
+
+      recovery_attempt_started.call
+      recovery_completed.call
+    end
+
+    context "when another thread holds a channel lock" do
+      it "waits until the lock is released before returning" do
+        events = Queue.new
+        locked = Queue.new
+        release = Queue.new
+        holder = Thread.new do
+          channel.synchronize do
+            locked << true
+            release.pop
+            events << :publish_finished
+          end
+        end
+        locked.pop
+
+        recovery = Thread.new do
+          recovery_attempt_started.call
+          events << :barrier_returned
+        end
+        wait_until_blocked(recovery)
+
+        expect(events.size).to eq(0)
+        expect(subject.ready?).to eq(false)
+
+        release << true
+        [holder, recovery].each { |thread| thread.join(5) }
+
+        expect(Array.new(events.size) { events.pop }).to eq([:publish_finished, :barrier_returned])
+      end
+    end
+
+    context "when the recovery runs on the thread that holds a channel lock" do
+      it "re-enters that lock without raising ThreadError" do
+        channel.synchronize do
+          expect { recovery_attempt_started.call }.not_to raise_error
+        end
+
+        expect(subject.ready?).to eq(false)
+      end
+    end
+
+    def wait_until_blocked(thread)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+      until thread.status != "run"
+        raise "thread did not block in time" if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
+        Thread.pass
       end
     end
   end
